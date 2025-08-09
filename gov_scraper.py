@@ -1,6 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 from gov_scraper_person import Person
+import concurrent.futures
+import pandas as pd
 
 # Parse the organisations from the response
 def parseOrganisations(response, element, elementClass):
@@ -47,19 +49,18 @@ def findText(element, text):
     return element.find(lambda tag: text in tag.get_text())
 
 # Parses the key people and prints their details
-def parseKeyPeople(element):
+def parseKeyPeople(element, organisation):
     people = element.find_all("li", class_="list-group-item")
     for person in people:
         return parsePeople(organisation, person)
 
 # Recursively find subsectors and parse their key people
-def findSubsectors(element, sector_name):
+def findSubsectors(element, sector_name, organisation):
     subsectors = element.find_all("li")
     for subsector in subsectors:
         if subsector.find("ul"):
-            inner_subsectors = subsector.find("ul").find_all("li")
-            next = BeautifulSoup(str(inner_subsectors), "html.parser")
-            findSubsectors(next, sector_name)
+            inner_subsectors = subsector.find("ul")
+            findSubsectors(inner_subsectors, sector_name)
         else:
             a_tag = subsector.find("a")
             if a_tag:
@@ -68,16 +69,24 @@ def findSubsectors(element, sector_name):
                 subsector_results = parseOrganisations(subsector_page, "section", ["views-element-container", "block-directory-custom"])
                 for subsector_result in subsector_results:
                     if findText(subsector_result, "Key People"):
-                        person_obj = parseKeyPeople(subsector_result)
+                        person_obj = parseKeyPeople(subsector_result, organisation)
                         person_obj.department = subsector.text.strip()
-                        print(f"Name: {person_obj.name}, Organisation: {person_obj.organisation}, Department: {person_obj.department}, Position: {person_obj.position}, Phone: {person_obj.phone}, Email: {person_obj.email}")
+                        records.append({
+                            "Name": person_obj.name,
+                            "Organisation": person_obj.organisation,
+                            "Department": person_obj.department,
+                            "Position": person_obj.position,
+                            "Phone": person_obj.phone,
+                            "Email": person_obj.email,
+                        })
 
 baseURL = 'https://www.directory.gov.au'
 page = getPage(baseURL + '/commonwealth-entities-and-companies')
 results = parseOrganisations(page, "td", "views-field views-field-title")
 
-# Main loop to iterate through each organisation
-for result in results:
+records = []
+
+def scrape_organisation(result):
     a_tag = result.find("a")
     if a_tag:
         organisation = result.text.strip()
@@ -89,12 +98,29 @@ for result in results:
             # Checks for immediate people listed within the organisation
             # ===========
             if findText(organisation_result, "Key People"):
-                person_obj = parseKeyPeople(organisation_result)
-                print(f"Name: {person_obj.name}, Organisation: {person_obj.organisation}, Department: {person_obj.department}, Position: {person_obj.position}, Phone: {person_obj.phone}, Email: {person_obj.email}")
+                person_obj = parseKeyPeople(organisation_result, organisation)
+                records.append({
+                    "Name": person_obj.name,
+                    "Organisation": person_obj.organisation,
+                    "Department": person_obj.department,
+                    "Position": person_obj.position,
+                    "Phone": person_obj.phone,
+                    "Email": person_obj.email,
+                })
 
             # ===========
             # Checks for sub-sectors within the organisation
             # ===========
             if findText(organisation_result, "Sections"):
                 subsector_name = ""
-                findSubsectors(organisation_result, subsector_name)
+                findSubsectors(organisation_result, subsector_name, organisation)
+
+# Main loop to iterate through each organisation
+if __name__ == '__main__':
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        executor.map(scrape_organisation, results)
+
+df = pd.DataFrame(records)
+excel_filename = "government_profiles.xlsx"
+df.to_excel(excel_filename, index=False)
+print(f"\n✅ Done. Exported {len(records)} profiles to {excel_filename}")
