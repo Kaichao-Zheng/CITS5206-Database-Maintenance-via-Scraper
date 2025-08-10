@@ -1,8 +1,9 @@
-import requests
+import requests, re, concurrent.futures
 from bs4 import BeautifulSoup
-from gov_scraper_person import Person
-import concurrent.futures
 import pandas as pd
+from gov_scraper_person import Person
+
+records = []
 
 # Parse the organisations from the response
 def parseOrganisations(response, element, elementClass):
@@ -54,6 +55,17 @@ def parseKeyPeople(element, organisation):
     for person in people:
         return parsePeople(organisation, person)
 
+# Appends a person object to the records list
+def appendPerson(person_obj):
+    records.append({
+        "Name": person_obj.name,
+        "Organisation": person_obj.organisation,
+        "Department": person_obj.department,
+        "Position": person_obj.position,
+        "Phone": person_obj.phone,
+        "Email": person_obj.email,
+    })
+
 # Recursively find subsectors and parse their key people
 def findSubsectors(element, sector_name, organisation):
     subsectors = element.find_all("li")
@@ -71,42 +83,40 @@ def findSubsectors(element, sector_name, organisation):
                     if findText(subsector_result, "Key People"):
                         person_obj = parseKeyPeople(subsector_result, organisation)
                         person_obj.department = subsector.text.strip()
-                        records.append({
-                            "Name": person_obj.name,
-                            "Organisation": person_obj.organisation,
-                            "Department": person_obj.department,
-                            "Position": person_obj.position,
-                            "Phone": person_obj.phone,
-                            "Email": person_obj.email,
-                        })
+                        appendPerson(person_obj)
+
+def scrapeBoards(element, organisation, text, department=None):
+    if findText(element, text):
+        role = element.find_all('a', href=re.compile(r"^/portfolios/"))
+        people = element.find_all('a', href=re.compile(r"^/people/"))
+        for i, person in enumerate(people):
+            person_obj = Person()
+            person_obj.addOrganisation(organisation)
+            person_obj.addDepartment(department)
+            person_obj.addPosition(role[i].text.strip())
+            person_obj.addName(person.text.strip())
+            appendPerson(person_obj)
 
 baseURL = 'https://www.directory.gov.au'
 page = getPage(baseURL + '/commonwealth-entities-and-companies')
 results = parseOrganisations(page, "td", "views-field views-field-title")
 
-records = []
-
 def scrape_organisation(result):
+    phone = None
     a_tag = result.find("a")
     if a_tag:
         organisation = result.text.strip()
         href = a_tag["href"]  # Extract the href attribute
         organisation_page = getPage(baseURL + href)
         organisation_results = parseOrganisations(organisation_page, "section", ["views-element-container", "block-directory-custom"])
+
         for organisation_result in organisation_results:
             # ===========
             # Checks for immediate people listed within the organisation
             # ===========
             if findText(organisation_result, "Key People"):
                 person_obj = parseKeyPeople(organisation_result, organisation)
-                records.append({
-                    "Name": person_obj.name,
-                    "Organisation": person_obj.organisation,
-                    "Department": person_obj.department,
-                    "Position": person_obj.position,
-                    "Phone": person_obj.phone,
-                    "Email": person_obj.email,
-                })
+                appendPerson(person_obj)
 
             # ===========
             # Checks for sub-sectors within the organisation
@@ -114,6 +124,26 @@ def scrape_organisation(result):
             if findText(organisation_result, "Sections"):
                 subsector_name = ""
                 findSubsectors(organisation_result, subsector_name, organisation)
+
+            # ===========
+            # Checks for executive appointments
+            # ===========
+            scrapeBoards(organisation_result, organisation, "Current single executive appointments", department=None)
+
+            # ===========
+            # Checks for linked boards
+            # ===========
+            if findText(organisation_result, "Government appointed boards"):
+                boards = organisation_result.find_all("li")
+                for board in boards:
+                    board_name = board.text.strip()
+                    a_tag = board.find("a")
+                    if a_tag:
+                        board_href = a_tag["href"]
+                        board_page = getPage(baseURL + board_href)
+                        board_results = parseOrganisations(board_page, "section", ["views-element-container", "block-directory-custom"])
+                        for board_result in board_results:
+                            scrapeBoards(board_result, organisation, "Current board appointments", department=board_name)
 
 # Main loop to iterate through each organisation
 if __name__ == '__main__':
