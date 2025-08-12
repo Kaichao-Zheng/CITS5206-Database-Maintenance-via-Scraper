@@ -1,1 +1,15 @@
+# Ignore Python compiled bytecode directories in any path
+**/__pycache__/
+
+# Ignore bulk local virtual environment files
+venv/
+.venv/
 .env
+.env.local
+
+# Ignore the backup files of .drawio
+*.bkp
+
+# for testing purposes
+test-*.py
+*.xlsx
