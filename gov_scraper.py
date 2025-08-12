@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 import pandas as pd
 from gov_scraper_person import Person
 
-records = []
 
 # Parse the organisations from the response
 def parseOrganisations(response, element, elementClass):
@@ -97,10 +96,7 @@ def scrapeBoards(element, organisation, text, department=None):
             person_obj.addName(person.text.strip())
             appendPerson(person_obj)
 
-baseURL = 'https://www.directory.gov.au'
-page = getPage(baseURL + '/commonwealth-entities-and-companies')
-results = parseOrganisations(page, "td", "views-field views-field-title")
-
+# Use DFS to scrape all people from the root page and its section and board pages.
 def scrape_organisation(result):
     phone = None
     a_tag = result.find("a")
@@ -119,7 +115,7 @@ def scrape_organisation(result):
                 appendPerson(person_obj)
 
             # ===========
-            # Checks for sub-sectors within the organisation
+            # Checks for sub-sectors within the organisation (assume the section hierarchy has only two levels)
             # ===========
             if findText(organisation_result, "Sections"):
                 subsector_name = ""
@@ -146,7 +142,14 @@ def scrape_organisation(result):
                             scrapeBoards(board_result, organisation, "Current board appointments", department=board_name)
 
 # Main loop to iterate through each organisation
+records = []
+
+baseURL = 'https://www.directory.gov.au'
+page = getPage(baseURL + '/commonwealth-entities-and-companies')
+results = parseOrganisations(page, "td", "views-field views-field-title")
+
 if __name__ == '__main__':
+    # Use a thread pool to concurrently scrape
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         executor.map(scrape_organisation, results)
 
