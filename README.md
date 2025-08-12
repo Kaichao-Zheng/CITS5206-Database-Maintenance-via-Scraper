@@ -10,11 +10,11 @@
 
    ```bash
    # create environment
-   python3.10 -m venv venv  #or other name you like
+   python3.10 -m venv venv		# or other name you like
 
    # activate environment
    source venv/bin/activate    # macOS/Linux
-   .\venv\Scripts\activate     # Windows
+   .\venv\Scripts\activate     # Windows Powershell
    ```
 
 2. Or with conda:
@@ -22,7 +22,7 @@
    ```bash
    # create environment
    conda create -n yourEnvName python=3.9.18
-
+   
    # activate environment
    conda activate yourEnvName
    ```
@@ -37,10 +37,19 @@
 
   ```bash
   pip install <package-name>
-
+  
   # commit in requirements.txt
   pip freeze > requirements.txt
   ```
+
+### Configure User Authentication
+
+Create a `.env` file in the root directory:
+
+```env
+LINKEDIN_EMAIL=some-email@email.address
+LINKEDIN_PASSWORD=your_password
+```
 
 ### Start the program
 
@@ -51,17 +60,13 @@ python3 scraper.py
 ## User Scraping
 
 ```python
-person = Person("https://www.linkedin.com/in/joey-sham-aa2a50122", driver=driver, scrape=False)
+person = Person("https://www.linkedin.com/in/joey-sham-aa2a50122", driver=driver, scrape=False, close_on_complete=False)
 ```
 
 - `scrape=False`: it doesn't automatically scrape the profile, but Chrome will open the linkedin page anyways.
 
-```python
-person.scrape(close_on_complete=False)
-```
-
 - when you run `person.scrape()`, it'll scrape and close the browser.
-- `close_on_complete=False` makes it not close the browser
+- `close_on_complete=False` keeps browser open to scrape next profile.
 
 ## URL
 
