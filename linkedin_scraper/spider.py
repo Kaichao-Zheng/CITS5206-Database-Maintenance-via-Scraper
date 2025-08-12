@@ -18,6 +18,7 @@ from google_scraper import scrape_google_emails_highlight, scrape_google_emails_
 # Helpers
 # ====================
 
+
 def human_delay(a=1.5, b=4.0):
     time.sleep(random.uniform(a, b)) # Random delay to mimic human behavior
 
@@ -81,6 +82,7 @@ for name in name_list:
     try:
         # enter search url
         search_url = f"https://www.linkedin.com/search/results/people/?keywords={name.replace(' ', '%20')}"
+        driver.get(search_url)
         close_alert_if_present(driver)
 #         human_delay(3, 6)
         # Mimic human scrolls
@@ -108,9 +110,10 @@ for name in name_list:
 
             # scrape information 
             person = Person(profile_url,driver=driver,scrape=False)
+            close_alert_if_present(driver)
             human_delay(1, 3)
             person.get_experiences()
-            name = person.name or ""
+            close_alert_if_present(driver)
             company = person.company or ""
             
             # get the positiontitle
@@ -122,13 +125,16 @@ for name in name_list:
             print("Company:", company)
             print("Position:", position_title)
             emails = scrape_google_emails_highlight(name, company, driver)
+            
+            print("email:", emails)
 
             # record to record list
             records.append({
                 "Name": name,
                 "Company": company,
                 "Position": position_title,
-                "Location": location
+                "Location": location,
+                "Emails": emails
             })
         else:
             print("No valid profile link found.")

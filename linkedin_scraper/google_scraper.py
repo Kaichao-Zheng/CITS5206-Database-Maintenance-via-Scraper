@@ -55,7 +55,7 @@ def scrape_google_emails_highlight(name, company,driver=None):
         if created_driver:
             driver.quit()
         
-def scrape_google_emails_fulltext(name, company):
+def scrape_google_emails_fulltext(name, company, driver=None):
     created_driver = False
     if driver is None:
         chrome_options = Options()
