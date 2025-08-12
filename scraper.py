@@ -105,6 +105,8 @@ for name in name_list:
                     position_title = person.experiences[0].position_title or ""     # mapped to 'Role'
                     # institution_name = person.experiences[0].institution_name or "" # mapped to 'Institution'
 
+                
+
                 print("Name:", name)
                 print("Location:", location)
                 print("Company:", company)
