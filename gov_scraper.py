@@ -115,7 +115,7 @@ def scrape_organisation(result):
                 appendPerson(person_obj)
 
             # ===========
-            # Checks for sub-sectors within the organisation (assume the section hierarchy has only two levels)
+            # Checks for sub-sectors within the organisation (recursively expands super-sectors)
             # ===========
             if findText(organisation_result, "Sections"):
                 subsector_name = ""
