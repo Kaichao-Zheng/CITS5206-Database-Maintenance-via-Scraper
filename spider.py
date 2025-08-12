@@ -35,18 +35,18 @@ def close_alert_if_present(driver):
 # ====================
 # Setup WebDriver
 # ====================
-# USER_AGENT = (
-#     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-#     "AppleWebKit/537.36 (KHTML, like Gecko) "
-#     "Chrome/114.0.0.0 Safari/537.36"
-# )
+USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/114.0.0.0 Safari/537.36"
+)
 
-# # create the Chromeoption
-# options = webdriver.ChromeOptions()
-# options.add_argument(f"user-agent={USER_AGENT}")
-# # option: mimic genuine user
-# options.add_argument("--disable-blink-features=AutomationControlled")
-# options.add_argument("--start-maximized")
+# create the Chromeoption
+options = webdriver.ChromeOptions()
+options.add_argument(f"user-agent={USER_AGENT}")
+# option: mimic genuine user
+options.add_argument("--disable-blink-features=AutomationControlled")
+options.add_argument("--start-maximized")
 
 driver = webdriver.Chrome()
 # load_dotenv()
@@ -89,48 +89,43 @@ for name in name_list:
 
         # position information that we want 
         container = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "search-results-container"))
-        )
+                EC.presence_of_element_located((By.CLASS_NAME, "search-results-container"))
+            )
+        
+        first_result_div = container.find_element(By.CSS_SELECTOR, "div[data-view-name='search-entity-result-universal-template']")
 
-        ul = container.find_element(By.TAG_NAME, "ul")
-        li_list = ul.find_elements(By.TAG_NAME, "li")
+        a_tag = first_result_div.find_element(By.TAG_NAME, "a")
+        href = a_tag.get_attribute("href").split('?mini')[0]
 
-        if li_list:
-            first_li = li_list[0]
-            a_tag = first_li.find_element(By.TAG_NAME, "a")
-            href = a_tag.get_attribute("href").split('?mini')[0]
-
-            if href and "/in/" in href:
-                print("Opening profile:", href)
-                profile_url = href
+        if href and "/in/" in href:
+            print("Opening profile:", href)
+            profile_url = href
 #                 human_delay(4, 7)
 
-                # scrape information 
-                person = Person(profile_url,driver=driver,scrape=False)
-                human_delay(3, 6)
-                person.scrape(close_on_complete=False)
-                name = person.name or ""
-                company = person.company or ""
+            # scrape information 
+            person = Person(profile_url,driver=driver,scrape=False)
+            human_delay(3, 6)
+            person.scrape(close_on_complete=False)
+            name = person.name or ""
+            company = person.company or ""
 
-                # get the positiontitle
-                position_title = ""
-                if person.experiences:
-                    position_title = person.experiences[0].position_title or ""
+            # get the positiontitle
+            position_title = ""
+            if person.experiences:
+                position_title = person.experiences[0].position_title or ""
 
-                print("Name:", name)
-                print("Company:", company)
-                print("Position:", position_title)
+            print("Name:", name)
+            print("Company:", company)
+            print("Position:", position_title)
 
-                # record to record list
-                records.append({
-                    "Name": name,
-                    "Company": company,
-                    "Position": position_title
-                })
-            else:
-                print("No valid profile link found.")
+            # record to record list
+            records.append({
+                "Name": name,
+                "Company": company,
+                "Position": position_title
+            })
         else:
-            print("No <li> elements found.")
+            print("No valid profile link found.")
     except Exception as e:
         print("Error during search/profile:", e)
 
