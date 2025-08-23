@@ -1,3 +1,4 @@
+alembic==1.16.4
 attrs==25.3.0
 blinker==1.9.0
 certifi==2025.8.3
@@ -7,12 +8,17 @@ dotenv==0.9.9
 et_xmlfile==2.0.0
 exceptiongroup==1.3.0
 Flask==3.1.1
+Flask-Login==0.6.3
+Flask-Migrate==4.1.0
+Flask-SQLAlchemy==3.1.1
+Flask-WTF==1.2.2
 h11==0.16.0
 idna==3.10
 itsdangerous==2.2.0
 Jinja2==3.1.6
 linkedin_scraper==2.11.5
 lxml==6.0.0
+Mako==1.3.10
 MarkupSafe==3.0.2
 numpy==2.2.6
 openpyxl==3.1.5
@@ -27,6 +33,8 @@ selenium==4.34.2
 six==1.17.0
 sniffio==1.3.1
 sortedcontainers==2.4.0
+SQLAlchemy==2.0.43
+tomli==2.2.1
 trio==0.30.0
 trio-websocket==0.12.2
 typing_extensions==4.14.1
@@ -35,3 +43,4 @@ urllib3==2.5.0
 websocket-client==1.8.0
 Werkzeug==3.1.3
 wsproto==1.2.0
+WTForms==3.2.1

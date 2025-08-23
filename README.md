@@ -70,5 +70,15 @@
 ### Start the program
 
 ```bash
-flask run
+python add_default_user.py # add default admin user when you start the program for the first time
+flask run # Or
+python run.py
+```
+
+### Database
+
+```bash
+flask db init
+flask db migrate
+flask db upgrade
 ```

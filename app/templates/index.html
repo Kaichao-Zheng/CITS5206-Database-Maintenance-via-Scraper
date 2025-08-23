@@ -1,5 +1,21 @@
 {% extends 'base.html' %} {% block content %}
+<form
+  action=""
+  method="post"
+  novalidate
+  class="bg-white border rounded-md flex flex-col gap-4 items-center p-6"
+>
+  {{ form.hidden_tag() }}
 
-<h1>Hello, {{ user.username }}!</h1>
+  <p>Please enter your password</p>
+  <div class="border rounded-sm p-2 outline-none">
+    {{ form.password(size=32) }}
+  </div>
+  {% for error in form.password.errors %}
+  <span class="text-red">[{{ error }}]</span>
+  {% endfor %}
+
+  <div class="button">{{ form.submit() }}</div>
+</form>
 
 {% endblock %}

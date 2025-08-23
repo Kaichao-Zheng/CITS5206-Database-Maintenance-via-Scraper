@@ -1,3 +1,15 @@
 body {
   background-color: #d0bcfe;
+  box-shadow: none;
+}
+
+.button {
+  padding: 8px 16px;
+  background-color: #6200ee;
+  border-radius: 5px;
+  color: #ffffff;
+}
+
+input:focus {
+  outline: none;
 }

@@ -16,7 +16,13 @@
     <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
     <title>Database Maintanance</title>
   </head>
-  <body class="flex flex-col min-h-screen">
-    {% block content %}{% endblock %}
+  <body class="flex flex-col justify-center items-center min-h-screen">
+    {% with messages = get_flashed_messages() %} {% if messages %}
+    <ul>
+      {% for message in messages %}
+      <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %} {% endwith %} {% block content %}{% endblock %}
   </body>
 </html>
