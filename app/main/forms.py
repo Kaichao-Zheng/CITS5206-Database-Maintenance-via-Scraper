@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import  PasswordField,  SubmitField,StringField
+from wtforms import  PasswordField,  SubmitField,StringField, FileField
 from wtforms.validators import DataRequired
 
 class LoginForm(FlaskForm):
@@ -10,3 +10,8 @@ class LoginForm(FlaskForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.username.data = "admin"   
+
+
+class UploadForm(FlaskForm):
+    file = FileField('Upload File', validators=[DataRequired()])
+    submit = SubmitField('Submit')

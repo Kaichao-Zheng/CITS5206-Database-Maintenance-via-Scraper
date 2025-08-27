@@ -20,7 +20,7 @@ def create_app(config_class=os.environ.get("FLASK_CONFIG") or DevelopmentConfig)
     migrate.init_app(app, db)
     csrf.init_app(app) 
     login.init_app(app)
-    login.login_view = 'login'
+    login.login_view = 'main.index'
     
     with app.app_context():
         from . import main
