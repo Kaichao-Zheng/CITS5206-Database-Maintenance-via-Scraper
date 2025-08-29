@@ -6,6 +6,7 @@
   <form
     method="POST"
     enctype="multipart/form-data"
+    action="{{ url_for('main.upload') }}"
     class="flex flex-col gap-4 items-center"
   >
     {{ form.hidden_tag() }} {{ form.file(class="hidden",
@@ -44,7 +45,7 @@
           />
         </svg>
       </div>
-      <p id="fileName">Click to Upload (.csv)</p>
+      <p id="fileName" class="text-gray-600">Click to Upload (.csv)</p>
     </label>
 
     {{ form.submit(class="button cursor-pointer w-24") }}
@@ -59,15 +60,10 @@
     const file = fileInput.files[0];
     if (file) {
       fileNameSpan.textContent = file.name;
+      fileNameSpan.classList.remove("text-gray-600");
+      fileNameSpan.classList.add("text-violet-700");
     } else {
       fileNameSpan.textContent = "Click to Upload (.csv)";
-    }
-  });
-
-  form.addEventListener("submit", (e) => {
-    if (!fileInput.files[0]) {
-      e.preventDefault();
-      alert("Please select a CSV file before submitting.");
     }
   });
 </script>

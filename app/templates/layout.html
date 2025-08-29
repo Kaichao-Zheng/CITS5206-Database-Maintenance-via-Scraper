@@ -1,7 +1,7 @@
 {% extends 'base.html' %} {% block content %}
 <div class="flex flex-col md:flex-row gap-6 w-full grow">
   <div
-    class="min-w-2xs bg-white text-black flex flex-row md:flex-col gap-6 p-4 md:mt-12 max-h-max"
+    class="min-w-2xs bg-white text-black flex flex-row md:flex-col gap-6 p-4 max-h-max flex-wrap"
   >
     <div class="text-lg font-bold">Data Updating Tool</div>
     <a
@@ -9,6 +9,12 @@
       class="{% if nav == 'workspace' %}text-violet-700 {% else %}text-gray-700{% endif %}"
     >
       Workspace
+    </a>
+    <a
+      href="{{ url_for('main.logs') }}"
+      class="{% if nav == 'logs' %}text-violet-700 {% else %}text-gray-700{% endif %}"
+    >
+      Logs
     </a>
 
     <a
@@ -25,25 +31,8 @@
     </a>
   </div>
   <div class="grow flex flex-col">
-    {% if nav == 'workspace' %}
-    <div class="flex h-12 items-center">
-      <a
-        href="{{ url_for('main.workspace') }}"
-        class="{% if active_tab == 'data' %}text-white border-b-2 border-white{% else %}text-gray-300{% endif %} bg-violet-700 rounded-t-md px-10 h-full flex items-center"
-      >
-        Data
-      </a>
-
-      <a
-        href="{{ url_for('main.logs') }}"
-        class="{% if active_tab == 'logs' %}text-white border-b-2 border-white{% else %}text-gray-300{% endif %} bg-violet-700 rounded-t-md px-10 h-full flex items-center"
-      >
-        Logs
-      </a>
-    </div>
-    {% endif %}
     <div
-      class="{% if nav == 'settings' %}md:mt-12{% endif %} bg-slate-200 rounded-b-xl rounded-tr-xl border-violet-700 border-2 overflow-auto flex p-4 justify-center items-center grow"
+      class="bg-slate-100 rounded-xl border-violet-700 border-2 overflow-auto flex p-4 justify-center items-center grow"
     >
       {% block main_content %} {% endblock %}
     </div>
