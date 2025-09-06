@@ -19,10 +19,11 @@ def getPage(baseURL):
         exit()
 
 # Find the people associated with an organisation
-def parsePeople(organisation, personElement):
+def parsePeople(personElement, organisation, location):
     person_obj = Person()
 
     person_obj.addOrganisation(organisation)
+    person_obj.addLocation(location)
 
     position_element = personElement.find("a")
     person_position = position_element.text.strip()
@@ -48,11 +49,19 @@ def parsePeople(organisation, personElement):
 def findText(element, text):
     return element.find(lambda tag: text in tag.get_text())
 
+# Parses the location of the organisation
+def parseLocation(element):
+    # Assume location is unique
+    location = element.find("div", class_="building-location")
+    if location:
+        return location.find("a").get_text(strip=True)
+    return None 
+
 # Parses the key people and prints their details
-def parseKeyPeople(element, organisation):
+def parseKeyPeople(element, organisation, location):
     people = element.find_all("li", class_="list-group-item")
     for person in people:
-        return parsePeople(organisation, person)
+        return parsePeople(person, organisation, location)
 
 # Appends a person object to the records list
 def appendPerson(person_obj):
@@ -63,10 +72,13 @@ def appendPerson(person_obj):
         "Position": person_obj.position,
         "Phone": person_obj.phone,
         "Email": person_obj.email,
+        "City": person_obj.city,
+        "State": person_obj.state,
+        "Country": person_obj.country,
     })
 
 # Recursively find subsectors and parse their key people
-def findSubsectors(element, sector_name, organisation):
+def findSubsectors(element, sector_name, organisation, location):
     subsectors = element.find_all("li")
     for subsector in subsectors:
         if subsector.find("ul"):
@@ -80,11 +92,11 @@ def findSubsectors(element, sector_name, organisation):
                 subsector_results = parseOrganisations(subsector_page, "section", ["views-element-container", "block-directory-custom"])
                 for subsector_result in subsector_results:
                     if findText(subsector_result, "Key People"):
-                        person_obj = parseKeyPeople(subsector_result, organisation)
+                        person_obj = parseKeyPeople(subsector_result, organisation, location)
                         person_obj.department = subsector.text.strip()
                         appendPerson(person_obj)
 
-def scrapeBoards(element, organisation, text, department=None):
+def scrapeBoards(element, text, organisation, location, department=None):
     if findText(element, text):
         role = element.find_all('a', href=re.compile(r"^/portfolios/"))
         people = element.find_all('a', href=re.compile(r"^/people/"))
@@ -94,6 +106,7 @@ def scrapeBoards(element, organisation, text, department=None):
             person_obj.addDepartment(department)
             person_obj.addPosition(role[i].text.strip())
             person_obj.addName(person.text.strip())
+            person_obj.addLocation(location)
             appendPerson(person_obj)
 
 # Use DFS to scrape all people from the root page and its section and board pages.
@@ -105,13 +118,15 @@ def scrape_organisation(result):
         href = a_tag["href"]  # Extract the href attribute
         organisation_page = getPage(baseURL + href)
         organisation_results = parseOrganisations(organisation_page, "section", ["views-element-container", "block-directory-custom"])
-
+        
+        location = parseLocation(organisation_results[1])
+        
         for organisation_result in organisation_results:
             # ===========
             # Checks for immediate people listed within the organisation
             # ===========
             if findText(organisation_result, "Key People"):
-                person_obj = parseKeyPeople(organisation_result, organisation)
+                person_obj = parseKeyPeople(organisation_result, organisation, location)
                 appendPerson(person_obj)
 
             # ===========
@@ -119,12 +134,12 @@ def scrape_organisation(result):
             # ===========
             if findText(organisation_result, "Sections"):
                 subsector_name = ""
-                findSubsectors(organisation_result, subsector_name, organisation)
+                findSubsectors(organisation_result, subsector_name, organisation, location)
 
             # ===========
             # Checks for executive appointments
             # ===========
-            scrapeBoards(organisation_result, organisation, "Current single executive appointments", department=None)
+            scrapeBoards(organisation_result, "Current single executive appointments", organisation, location, department=None)
 
             # ===========
             # Checks for linked boards
@@ -139,7 +154,7 @@ def scrape_organisation(result):
                         board_page = getPage(baseURL + board_href)
                         board_results = parseOrganisations(board_page, "section", ["views-element-container", "block-directory-custom"])
                         for board_result in board_results:
-                            scrapeBoards(board_result, organisation, "Current board appointments", department=board_name)
+                            scrapeBoards(board_result, "Current board appointments", organisation, location, department=board_name)
 
 # Main loop to iterate through each organisation
 records = []

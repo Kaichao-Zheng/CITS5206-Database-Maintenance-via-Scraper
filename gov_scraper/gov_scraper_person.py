@@ -10,6 +10,9 @@ class Person:
         self.website = None
         self.address = None
         self.postal_address = None
+        self.city = None
+        self.state = None
+        self.country = None
 
     def addName(self, name):
         self.name = name
@@ -40,4 +43,13 @@ class Person:
 
     def addPostalAddress(self, postal_address):
         self.postal_address = postal_address
-
+        
+    def addLocation(self, location):
+        if not location:
+            return
+        components = location.split(" ")
+        self.state = components[-2]
+        if self.state in ["ACT", "NSW", "NT", "QLD", "SA", "TAS", "VIC", "WA"]:
+            self.country = "Australia"
+        else:
+            self.city = " ".join(components[:-2])
