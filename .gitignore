@@ -12,3 +12,6 @@ venv/
 # for testing purposes
 test-*.py
 *.xlsx
+
+#db
+*.db

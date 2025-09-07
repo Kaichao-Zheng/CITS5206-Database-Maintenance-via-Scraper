@@ -67,8 +67,37 @@
   pip freeze > requirements.txt
   ```
 
+### Configure User Authentication
+
+Create a `.env` file in the root directory:
+
+```env
+LINKEDIN_EMAIL=some-email@email.address
+LINKEDIN_PASSWORD=your_linkedin_password
+ADMIN_PASSWORD=app_login_password
+
+FLASK_APP=run.py
+FLASK_CONFIG=config.DevelopmentConfig
+
+# leave blank for production env
+FLASK_ENV=
+
+# CSRF protection; leave blank for default dev key
+SECRET_KEY=
+```
+
+### Create database and configure schema
+
+```bash
+#flask db init
+#flask db migrate
+flask db upgrade
+```
+
 ### Start the program
 
 ```bash
-flask run
+python add_default_user.py # add default admin user when you start the program for the first time
+flask run # Or
+python run.py
 ```
