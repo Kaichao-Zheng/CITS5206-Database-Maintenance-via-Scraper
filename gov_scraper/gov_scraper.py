@@ -66,10 +66,14 @@ def parseKeyPeople(element, organisation, location):
 # Appends a person object to the records list
 def appendPerson(person_obj):
     records.append({
+        "Salutation": person_obj.salutation,
+        "FirstName": person_obj.fname,
+        "LastName": person_obj.lname,
         "Name": person_obj.name,
         "Organisation": person_obj.organisation,
         "Department": person_obj.department,
         "Position": person_obj.position,
+        "Gender": person_obj.gender,
         "Phone": person_obj.phone,
         "Email": person_obj.email,
         "City": person_obj.city,
