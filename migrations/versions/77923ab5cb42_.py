@@ -21,7 +21,7 @@ def upgrade():
     op.create_table('user',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('username', sa.String(length=64), nullable=False),
-    sa.Column('password_hash', sa.String(length=256), nullable=True),
+    sa.Column('password_hash', sa.String(length=256), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     with op.batch_alter_table('user', schema=None) as batch_op:

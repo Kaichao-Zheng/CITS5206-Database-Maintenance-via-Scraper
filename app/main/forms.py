@@ -9,7 +9,7 @@ class LoginForm(FlaskForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.username.data = "admin"   
+        self.username.data = "admin"   # default username
 
 
 class UploadForm(FlaskForm):

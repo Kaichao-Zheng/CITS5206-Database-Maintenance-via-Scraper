@@ -74,7 +74,7 @@ def settings():
 @bp.route("/logs")
 @login_required
 def logs():
-    return render_template("logs.html", nav="workspace", )
+    return render_template("logs.html", nav="logs", )
 
 @bp.route("/upload", methods=["POST"])
 @login_required
@@ -86,6 +86,7 @@ def upload():
     file = request.files.get("file")
     try:
         db.session.execute(sa.insert(Log).values()) # TODO: implement logging bad lines
+        db.session.commit()
         df = pd.read_csv(file, engine="python", on_bad_lines=handle_bad_line)
         df = df[[col for col in df.columns if col in field_mapping]].rename(columns=field_mapping)
 

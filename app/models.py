@@ -11,7 +11,7 @@ class User(UserMixin,db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     username: so.Mapped[str] = so.mapped_column(sa.String(64), index=True,
                                                 unique=True,nullable=False)
-    password_hash: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256))
+    password_hash: so.Mapped[str] = so.mapped_column(sa.String(256))
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -45,7 +45,7 @@ class People(db.Model):
     linkedin: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128))
 
     def __repr__(self):
-        return '<People {}>'.format(self.name)
+        return '<People {}>'.format(self.first_name or '', self.last_name or '')
     
 class Log(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
