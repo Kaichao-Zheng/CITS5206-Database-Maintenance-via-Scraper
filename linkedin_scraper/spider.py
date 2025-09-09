@@ -14,6 +14,8 @@ from dotenv import load_dotenv
 from get_location import get_linkedin_location
 from google_scraper import scrape_google_emails_highlight, scrape_google_emails_fulltext
 
+err_msg = {"cookie":"LI_AT_COOKIE is not set. Please add it to the .env file."}
+
 # ====================
 # Helpers
 # ====================
@@ -47,17 +49,36 @@ USER_AGENT = (
 
 # create the Chromeoption
 options = webdriver.ChromeOptions()
-options.add_argument(f"user-agent={USER_AGENT}")
-options.add_argument("--headless")  # Run in headless mode
+options.add_argument("--log-level=3")               # Reduce Chrome logs for errors only
+# options.add_argument(f"user-agent={USER_AGENT}")    # Invalidate cookie quickly due to unmatched USER_AGENT
+# options.add_argument("--headless")                  # Run in headless mode (commented out for visualized scraping)
+
 # option: mimic genuine user
 options.add_argument("--disable-blink-features=AutomationControlled")
 options.add_argument("--start-maximized")
 
-driver = webdriver.Chrome()
+driver = webdriver.Chrome(options=options)
+
 load_dotenv()
+# Option 1: Password login
+'''
 email = os.getenv("LINKEDIN_EMAIL")
 password = os.getenv("LINKEDIN_PASSWORD")
 actions.login(driver, email, password)
+'''
+
+# Option 2: Cookie login to reduce detection of unusual multi-device logins per run
+cookie = os.getenv("LI_AT_COOKIE")
+assert cookie, err_msg["cookie"]
+driver.get("https://www.linkedin.com")
+
+driver.add_cookie({
+    'name': 'li_at',
+    'value': cookie,
+    'domain': '.www.linkedin.com',
+    'path': '/',
+    'secure': True,
+})
 
 
 # ====================
