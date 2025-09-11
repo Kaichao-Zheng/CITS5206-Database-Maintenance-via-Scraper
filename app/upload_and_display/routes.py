@@ -4,7 +4,7 @@ import sqlalchemy as sa
 from app import db
 from app.models import User,People, Log, LogDetail
 from app.main.forms import LoginForm,UploadForm
-from flask_login import current_user, login_user,logout_user,login_required
+from flask_login import current_user, login_user,logout_user,login_required,send_file
 import pandas as pd
 from charset_normalizer import detect
 from requests.exceptions import RequestException
@@ -50,7 +50,7 @@ def upload():
         df = pd.read_csv(text_file, engine="c")
 
         df.columns = df.columns.str.strip()
-        
+
         df = df[[col for col in df.columns if col in field_mapping]].rename(columns=field_mapping)
 
         
@@ -83,3 +83,40 @@ def upload():
         db.session.rollback()
         flash(f"Upload failed: {str(e)}", "danger")
         return redirect(url_for("main.workspace"))
+    
+@bp.route("/data", methods=["GET"])
+@login_required
+def get_data():
+    people = db.session.query(People).all()
+    data = [p.as_dict() for p in people]  
+    return jsonify(data)
+
+@bp.route("/update",methods=["POST"])
+@login_required
+def update_data():
+    data = request.json
+
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    try:
+        db.session.query(People).delete()
+        db.session.bulk_insert_mappings(People, data)
+        db.session.commit()
+        print("Update successful")
+        return jsonify({"status": "success"})
+    except Exception as e:
+        db.session.rollback()
+        print("Update failed:", str(e))
+        return jsonify({"error": str(e)}), 500
+
+@bp.route("/export", methods=["GET"])
+@login_required
+def export_data():
+    people = db.session.query(People).all()
+    df = pd.DataFrame([p.as_dict() for p in people])
+    output = BytesIO()
+    df.to_excel(output, index=False)
+    output.seek(0)
+    return send_file(output,
+                     download_name="people.xlsx",
+                     as_attachment=True)
