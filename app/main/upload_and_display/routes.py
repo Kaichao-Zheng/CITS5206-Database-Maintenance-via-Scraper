@@ -82,7 +82,7 @@ def upload():
         db.session.commit()
 
         flash(f"Uploaded {len(people)} people successfully!", "success")
-        return redirect(url_for("main.workspace")) # TODO: redirect to update
+        return redirect(url_for("upload_and_display.excel_display")) # TODO: redirect to update
 
     except Exception as e:
         db.session.rollback()
