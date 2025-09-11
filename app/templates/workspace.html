@@ -6,7 +6,7 @@
   <form
     method="POST"
     enctype="multipart/form-data"
-    action="{{ url_for('main.upload') }}"
+    action="{{ url_for('upload_and_display.upload') }}"
     class="flex flex-col gap-4 items-center"
   >
     {{ form.hidden_tag() }} {{ form.file(class="hidden",

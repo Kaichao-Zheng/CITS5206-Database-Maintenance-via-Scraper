@@ -27,6 +27,11 @@ field_mapping = {
             "Linkedin": "linkedin"
         }
 
+@ud.route("/excel_display", methods=["GET"])
+@login_required
+def excel_display():
+    return render_template("/excel_display.html", nav="workspace")
+
 @ud.route("/upload", methods=["POST"])
 @login_required
 def upload(): 
