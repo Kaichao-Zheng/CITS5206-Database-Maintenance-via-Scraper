@@ -48,9 +48,12 @@ def upload():
         db.session.execute(sa.insert(Log).values()) # TODO: implement logging bad lines
         db.session.commit()
         df = pd.read_csv(text_file, engine="c")
+
+        df.columns = df.columns.str.strip()
         
         df = df[[col for col in df.columns if col in field_mapping]].rename(columns=field_mapping)
 
+        
         # Validate required fields
         required_fields = ["first_name", "last_name"]
         for field in required_fields:
