@@ -1,10 +1,10 @@
-from app.main import bp
-from flask import Flask, render_template,flash, redirect,url_for,request, jsonify
+from app.main.upload_and_display import ud
+from flask import Flask, render_template,flash, redirect,url_for,request, jsonify,send_file
 import sqlalchemy as sa
 from app import db
 from app.models import User,People, Log, LogDetail
 from app.main.forms import LoginForm,UploadForm
-from flask_login import current_user, login_user,logout_user,login_required,send_file
+from flask_login import current_user, login_user,logout_user,login_required
 import pandas as pd
 from charset_normalizer import detect
 from requests.exceptions import RequestException
@@ -27,7 +27,7 @@ field_mapping = {
             "Linkedin": "linkedin"
         }
 
-@bp.route("/upload", methods=["POST"])
+@ud.route("/upload", methods=["POST"])
 @login_required
 def upload(): 
     if "file" not in request.files:
@@ -84,14 +84,14 @@ def upload():
         flash(f"Upload failed: {str(e)}", "danger")
         return redirect(url_for("main.workspace"))
     
-@bp.route("/data", methods=["GET"])
+@ud.route("/data", methods=["GET"])
 @login_required
 def get_data():
     people = db.session.query(People).all()
     data = [p.as_dict() for p in people]  
     return jsonify(data)
 
-@bp.route("/update",methods=["POST"])
+@ud.route("/update",methods=["POST"])
 @login_required
 def update_data():
     data = request.json
@@ -109,7 +109,7 @@ def update_data():
         print("Update failed:", str(e))
         return jsonify({"error": str(e)}), 500
 
-@bp.route("/export", methods=["GET"])
+@ud.route("/export", methods=["GET"])
 @login_required
 def export_data():
     people = db.session.query(People).all()
