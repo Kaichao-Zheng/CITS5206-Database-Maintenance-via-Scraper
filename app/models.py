@@ -47,6 +47,13 @@ class People(db.Model):
     def __repr__(self):
         return '<People {}>'.format(self.first_name or '', self.last_name or '')
     
+    def as_dict(self):
+        return {
+            column.name: getattr(self, column.name)
+            for column in self.__table__.columns
+            if column.name != 'id'  # Exclude auto-incremented id
+        }
+    
 class Log(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     create_at: so.Mapped[Optional[datetime]] = so.mapped_column(sa.DateTime, default=datetime.utcnow)
