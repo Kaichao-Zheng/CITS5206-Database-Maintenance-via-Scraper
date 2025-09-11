@@ -23,6 +23,7 @@ def create_app(config_class=os.environ.get("FLASK_CONFIG") or DevelopmentConfig)
     login.login_view = 'main.index'
     
     with app.app_context():
-        from . import main
+        from . import main, upload_and_display
         app.register_blueprint(main.bp)
+        app.register_blueprint(upload_and_display.bp)
     return app
