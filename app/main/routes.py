@@ -3,7 +3,7 @@ from flask import Flask, render_template,flash, redirect,url_for,request, jsonif
 import sqlalchemy as sa
 from app import db
 from app.models import User,People, Log, LogDetail
-from app.main.forms import LoginForm,UploadForm
+from app.main.forms import LoginForm,UploadForm, SettingsForm
 from flask_login import current_user, login_user,logout_user,login_required
 import pandas as pd
 from requests.exceptions import RequestException
@@ -69,7 +69,8 @@ def update():
 @bp.route("/settings")
 @login_required
 def settings():
-    return render_template("settings.html", nav="settings")
+    form = SettingsForm()
+    return render_template("settings.html", nav="settings",form=form)
 
 @bp.route("/logs")
 @login_required
