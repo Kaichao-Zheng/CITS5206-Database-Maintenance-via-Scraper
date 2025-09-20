@@ -67,12 +67,6 @@
   pip freeze > requirements.txt
   ```
 
-### Start the program
-
-```bash
-flask run
-```
-
 ### Configure User Authentication
 
 Create a `.env` file in the root directory:
@@ -80,18 +74,39 @@ Create a `.env` file in the root directory:
 ```env
 # Password Login
 LINKEDIN_EMAIL=some-email@email.address
-LINKEDIN_PASSWORD=your_password
+LINKEDIN_PASSWORD=your_linkedin_password
 
 # Cookie Login
-LI_AT_COOKIE=
+LI_AT_COOKIE=your_linkedin_cookie
+
+# Web Application Password
+ADMIN_PASSWORD=app_login_password
+
+FLASK_APP=run.py
+FLASK_CONFIG=config.DevelopmentConfig
+
+# leave blank for production env
+FLASK_ENV=
+
+# CSRF protection; leave blank for default dev key
+SECRET_KEY=
 ```
+[How to sign in LinkedIn using a cookie?](how-to-sign-in-linkedin-using-a-cookie.md)
 
-[How to sign in LinkedIn using a cookie](how-to-sign-in-linkedin-using-a-cookie.md)
-
-### Start the program
+### Create database and configure schema
 
 ```bash
-python3 scraper.py
+#flask db init
+#flask db migrate
+flask db upgrade
+```
+
+### Start the web application
+
+```bash
+python add_default_user.py # add default admin user when you start the program for the first time
+flask run # Or
+python run.py
 ```
 
 ## User Scraping

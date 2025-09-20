@@ -1,0 +1,70 @@
+{% extends 'layout.html' %}{% block main_content %}
+<div
+  class="px-20 py-8 border bg-white border-violet-700 rounded-lg flex flex-col gap-4 items-center"
+>
+  <div class="mb-4">Upload file</div>
+  <form
+    method="POST"
+    enctype="multipart/form-data"
+    action="{{ url_for('upload_and_display.upload') }}"
+    class="flex flex-col gap-4 items-center"
+  >
+    {{ form.hidden_tag() }} {{ form.file(class="hidden",
+    id="fileInput",accept=".csv") }}
+    <label
+      for="fileInput"
+      class="cursor-pointer p-8 gap-6 text-gray-600 flex flex-col items-center hover:text-violet-700 transition-colors duration-300"
+    >
+      <div>
+        <svg
+          width="39"
+          height="38"
+          viewBox="0 0 39 38"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21.0833 3.16669H21.5151C26.6786 3.16669 29.2604 3.16669 31.0534 4.42993C31.5671 4.79186 32.0232 5.2211 32.4077 5.70459C33.7499 7.39208 33.7499 9.822 33.7499 14.6818V18.7121C33.7499 23.4038 33.7499 25.7497 33.0074 27.6232C31.8138 30.6353 29.2895 33.0111 26.0892 34.1345C24.0985 34.8334 21.6061 34.8334 16.6211 34.8334C13.7726 34.8334 12.3483 34.8334 11.2108 34.434C9.38209 33.7921 7.93961 32.4345 7.25753 30.7133C6.83325 29.6427 6.83325 28.3022 6.83325 25.6212V19"
+            stroke="#3276E8"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M33.7501 19C33.7501 21.9148 31.3871 24.2778 28.4723 24.2778C27.4181 24.2778 26.1754 24.0931 25.1504 24.3677C24.2398 24.6117 23.5285 25.323 23.2844 26.2337C23.0098 27.2586 23.1945 28.5014 23.1945 29.5556C23.1945 32.4704 20.8316 34.8333 17.9167 34.8333"
+            stroke="#3276E8"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M17.9167 9.50002L5.25 9.50002M11.5833 3.16669V15.8334"
+            stroke="#3276E8"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+      </div>
+      <p id="fileName" class="text-gray-600">Click to Upload (.csv)</p>
+    </label>
+
+    {{ form.submit(class="button cursor-pointer w-24") }}
+  </form>
+</div>
+<script>
+  const fileInput = document.getElementById("fileInput");
+  const fileNameSpan = document.getElementById("fileName");
+  const form = document.getElementById("uploadForm");
+
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files[0];
+    if (file) {
+      fileNameSpan.textContent = file.name;
+      fileNameSpan.classList.remove("text-gray-600");
+      fileNameSpan.classList.add("text-violet-700");
+    } else {
+      fileNameSpan.textContent = "Click to Upload (.csv)";
+    }
+  });
+</script>
+{% endblock %}
