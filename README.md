@@ -78,9 +78,15 @@ flask run
 Create a `.env` file in the root directory:
 
 ```env
+# Password Login
 LINKEDIN_EMAIL=some-email@email.address
 LINKEDIN_PASSWORD=your_password
+
+# Cookie Login
+LI_AT_COOKIE=
 ```
+
+[How to sign in LinkedIn using a cookie](how-to-sign-in-linkedin-using-a-cookie.md)
 
 ### Start the program
 
