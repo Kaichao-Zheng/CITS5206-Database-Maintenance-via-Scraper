@@ -15,9 +15,3 @@ class LoginForm(FlaskForm):
 class UploadForm(FlaskForm):
     file = FileField('Upload File')
     submit = SubmitField('Submit')
-    
-class SettingsForm(FlaskForm):
-    old_password = PasswordField('Old Password', validators=[DataRequired()])
-    new_password = PasswordField('New Password', validators=[DataRequired()])
-    repeat_new_password = PasswordField('Repeat New Password', validators=[DataRequired()])
-    submit = SubmitField('Submit')
