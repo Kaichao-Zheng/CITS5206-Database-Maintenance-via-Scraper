@@ -70,3 +70,14 @@ class LogDetail(db.Model):
 
     def __repr__(self):
         return '<LogDetail {}>'.format(self.id)
+
+class IP(so.MappedAsDataclass, db.Model):  
+    __tablename__ = "ip"
+
+    id: so.Mapped[int] = so.mapped_column(sa.Integer, primary_key=True)
+    address: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64), nullable=False)
+    port: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer, nullable=True)
+    type: so.Mapped[Optional[str]] = so.mapped_column(sa.String(32), nullable=True)
+    source: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128), nullable=True)
+    
+    
