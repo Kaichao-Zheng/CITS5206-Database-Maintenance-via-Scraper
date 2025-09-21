@@ -71,7 +71,7 @@ class LogDetail(db.Model):
     def __repr__(self):
         return '<LogDetail {}>'.format(self.id)
 
-class IP(so.MappedAsDataclass, db.Model):  
+class IP(db.Model):  
     __tablename__ = "ip"
 
     id: so.Mapped[int] = so.mapped_column(sa.Integer, primary_key=True)
@@ -79,8 +79,9 @@ class IP(so.MappedAsDataclass, db.Model):
     port: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer, nullable=True)
     type: so.Mapped[Optional[str]] = so.mapped_column(sa.String(32), nullable=True)
     source: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128), nullable=True)
+    is_expired: so.Mapped[Optional[bool]] = so.mapped_column(sa.Boolean, default=False, nullable=False)
 
-class Profile(so.MappedAsDataclass, db.Model):
+class Profile(db.Model):
     __tablename__ = "profile"
 
     id: so.Mapped[int] = so.mapped_column(sa.Integer, primary_key=True)
