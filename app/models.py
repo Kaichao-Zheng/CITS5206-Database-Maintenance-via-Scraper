@@ -79,5 +79,16 @@ class IP(so.MappedAsDataclass, db.Model):
     port: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer, nullable=True)
     type: so.Mapped[Optional[str]] = so.mapped_column(sa.String(32), nullable=True)
     source: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128), nullable=True)
+
+class Profile(so.MappedAsDataclass, db.Model):
+    __tablename__ = "profile"
+
+    id: so.Mapped[int] = so.mapped_column(sa.Integer, primary_key=True)
+    first_name: so.Mapped[Optional[str]] = so.mapped_column(sa.String(50), nullable=False)
+    last_name: so.Mapped[Optional[str]] = so.mapped_column(sa.String(50), nullable=False)
+    url: so.Mapped[Optional[str]] = so.mapped_column(sa.String(255), nullable=False, unique=True)
+
+    def __repr__(self):
+        return f"<Profile(first_name={self.first_name}, last_name={self.last_name}, url={self.url})>"
     
     
