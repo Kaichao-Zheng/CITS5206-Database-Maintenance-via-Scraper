@@ -9,6 +9,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import random
 import undetected_chromedriver as uc
 import re
+from urllib.parse import urlparse, urlunparse
 
 
 
@@ -58,8 +59,9 @@ def scrape_linkedin_people_search(names, email, password, cookies_file="linkedin
     - Saves separate HTML files for each name's search outcome
     - Uses proxy rotation every 3 names
     """
-    batch_size = 5  # Change proxy every 3 names
+    batch_size = 20  # Change proxy every 20 names
     first_batch = True  # Track if this is the first batch (needs login)
+    results = {} # Store results for each name
     
     # Check if cookies exist and load them
     if os.path.exists(cookies_file) and not first_batch:
@@ -126,9 +128,14 @@ def scrape_linkedin_people_search(names, email, password, cookies_file="linkedin
                     for link in links:
                         href = link.get_attribute("href")  
                         if href and "linkedin.com/in/" in href:  
-                            print("found url:",href)  
+                            
+                            parsed_url = urlparse(href)
+                            clean_url = urlunparse(parsed_url._replace(query=''))  # 替换查询部分为空字符串
+                            
+                            print("found url:", clean_url)  
+                            results[name] = clean_url
                             found = True  
-                            break  
+                            break
 
                     if not found:
                         print("could not find any linkedin profile link on the search results page.")
@@ -158,3 +165,4 @@ def scrape_linkedin_people_search(names, email, password, cookies_file="linkedin
                 time.sleep(batch_delay)
     
     print("Scraping completed!")
+    return results
