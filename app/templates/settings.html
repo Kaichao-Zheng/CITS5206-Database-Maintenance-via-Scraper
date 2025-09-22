@@ -30,12 +30,9 @@
         </span>
       </div>
     </div>
-    <div style="width:344px;position:relative;">
-      <div id="passwordRules" style="width:330px;height:54px;border:1px solid #6155F5;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#6200EE;font-size:16px;background:#fff;position:relative;cursor:pointer;">
-        Password rules
-        <div id="rulesTooltip" style="display:none;position:absolute;top:60px;left:0;width:330px;background:#fff;border:1px solid #6200EE;border-radius:4px;padding:12px;color:#333;z-index:10;font-size:14px;box-shadow:0 2px 8px rgba(98,0,238,0.08);">
-          Password must be at least 8 characters long and contain letters, numbers, and special characters (e.g. !@#$%^&*()_+ etc.)
-        </div>
+    <div style="width:344px;">
+      <div style="width:330px;height:54px;border:1px solid #6155F5;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#6200EE;font-size:16px;background:#fff;">
+        &lt;Password rules&gt;
       </div>
     </div>
     <div id="passwordError" style="color:red;font-size:14px;display:none;width:330px;text-align:center;"></div>
@@ -54,48 +51,14 @@ function togglePassword(inputId, iconSpan) {
   }
 }
 
-// Password rule validation
-function validatePasswordRule(pwd) {
-  // At least 8 characters, including letters, numbers, and special characters
-  return /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/.test(pwd);
-}
-
-// Password rules hover tooltip
-const rulesDiv = document.getElementById('passwordRules');
-const tooltip = document.getElementById('rulesTooltip');
-rulesDiv.addEventListener('mouseenter', () => { tooltip.style.display = 'block'; });
-rulesDiv.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
-
-// Frontend validation
+// Frontend password consistency check
 document.getElementById('settingsForm').addEventListener('submit', function(e) {
-  const oldPwd = document.getElementById('old_password').value;
   const newPwd = document.getElementById('new_password').value;
   const repeatPwd = document.getElementById('repeat_new_password').value;
   const errorDiv = document.getElementById('passwordError');
-
-  // New password rule validation
-  if (!validatePasswordRule(newPwd)) {
-    e.preventDefault();
-    errorDiv.textContent = "The new password must be at least 8 characters long and contain letters, numbers, and special characters.";
-    errorDiv.style.display = "block";
-    return;
-  }
-  // Consistency check for new password and confirmation
   if (newPwd !== repeatPwd) {
     e.preventDefault();
-    errorDiv.textContent = "The new password and confirmation password do not match. Please re-enter.";
-    errorDiv.style.display = "block";
-    return;
-  }
-  errorDiv.style.display = "none";
-});
-
-// Show prompt if new password does not meet the rule while typing
-document.getElementById('new_password').addEventListener('input', function() {
-  const newPwd = this.value;
-  const errorDiv = document.getElementById('passwordError');
-  if (newPwd && !validatePasswordRule(newPwd)) {
-    errorDiv.textContent = "The new password must be at least 8 characters long and contain letters, numbers, and special characters.";
+    errorDiv.textContent = " The new password does not match the confirmation password. Please re-enter it.";
     errorDiv.style.display = "block";
   } else {
     errorDiv.style.display = "none";
