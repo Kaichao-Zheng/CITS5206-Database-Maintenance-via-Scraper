@@ -9,6 +9,10 @@ venv/
 # Ignore the backup files of .drawio
 *.bkp
 
+# ignore macOS system files
+.DS_Store
+**/.DS_Store
+
 # for testing purposes
 test-*.py
 *.xlsx
