@@ -28,4 +28,6 @@ def create_app(config_class=os.environ.get("FLASK_CONFIG") or DevelopmentConfig)
         app.register_blueprint(auth.bp)
         app.register_blueprint(main.bp)
         app.register_blueprint(upload_and_display.ud)
+        from .main import scraping
+        app.register_blueprint(scraping.sc)
     return app
