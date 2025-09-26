@@ -1,99 +1,192 @@
 {% extends 'layout.html' %}{% block main_content %}
 <div id="hot" class="w-full h-full"></div>
 <div class="fixed bottom-4 right-4 flex gap-4">
-  <button id="saveBtn" class="button cursor-pointer w-24 bg-violet-700 text-white rounded-md py-2 hover:bg-violet-800 transition-colors duration-300">💾 Save</button>
-  <button id="exportBtn" class="button cursor-pointer w-24 bg-violet-700 text-white rounded-md py-2 hover:bg-violet-800 transition-colors duration-300">⬇️ Export</button>
+  <button
+    id="updateBtn"
+    class="button cursor-pointer w-24 bg-violet-700 text-white rounded-md py-2 hover:bg-violet-800 transition-colors duration-300"
+  >
+    🔄 Update
+  </button>
+  <!-- <button id="exportBtn" class="button cursor-pointer w-24 bg-violet-700 text-white rounded-md py-2 hover:bg-violet-800 transition-colors duration-300">⬇️ Export</button> -->
+  <div
+    id="updateModal"
+    class="hidden fixed inset-0 bg-violet-300 bg-opacity-50 flex items-center justify-center z-99"
+  >
+    <div class="bg-white rounded-lg shadow-lg w-96 p-6">
+      <h2 class="text-lg font-semibold mb-4">Update Data</h2>
+
+      <label for="dataSource" class="block text-sm font-medium mb-2"
+        >Choose Data Source</label
+      >
+      <select
+        id="dataSource"
+        class="w-full border rounded-md px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-violet-500"
+      >
+        <option value="default">Linkedin</option>
+        <option value="gw">Government Website</option>
+      </select>
+      <p id="linkedinWarning" class="hidden mb-3 text-sm text-red-600">
+        ⚠️ Please make sure you have less than 30 rows in case your IP gets
+        banned by LinkedIn.
+      </p>
+
+      <div class="flex justify-end gap-2">
+        <button
+          id="cancelModal"
+          class="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 transition"
+        >
+          Cancel
+        </button>
+        <button
+          id="confirmUpdate"
+          class="px-4 py-2 rounded-md bg-violet-700 text-white hover:bg-violet-800 transition"
+        >
+          Submit
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const container = document.getElementById('hot');
-  console.log('Sending request to /data...');
-  // Fetch data from the /data endpoint
-  fetch('/data')
-    .then(res => {
-      if (!res.ok) {
-        throw new Error(`HTTP error! Status: ${res.status}`);
-      }
-      return res.json();
-    })
-    .then(data => {
-      console.log('Data received from /data:', data); 
-      if (!data || !Array.isArray(data) || data.length === 0) {
-        alert('No data available to display.');
-        return;
-      }
-
-      // Define column headers based on field_mapping keys for display
-      const displayColumns = [
-      'first_name', 'last_name', 'salutation', 'organization', 'role',
-      'gender', 'city', 'state', 'country', 'business_phone', 'mobile_phone',
-      'email', 'sector', 'linkedin'
-      ];
-
-      const colHeaders = [
-      'FirstName', 'LastName', 'Salutation', 'Organization', 'Role',
-      'Gender', 'City (if outside AUS)', 'State AUS only', 'Country', 'Business Phone',
-      'Mobile Phone', 'EmailAddress', 'Sector', 'Linkedin'
-      ];
-      // Initialize Handsontable
-      const hot = new Handsontable(container, {
-       data: data,
-        rowHeaders: true,
-        colHeaders: colHeaders,
-        columns: displayColumns.map(col => ({ data: col })),
-        filters: true,
-        dropdownMenu: true,
-        width: '100%', // Full width of the container
-        height: 'calc(100vh - 80px)', // Full height minus space for buttons and padding
-        autoWrapRow: true,
-        autoWrapCol: true,
-        minRows: 1,
-        minSpareRows: 1,
-        licenseKey: 'non-commercial-and-evaluation'
-      });
-
-      // Save button event listener
-      document.getElementById('saveBtn').addEventListener('click', () => {
-        const updatedData = hot.getSourceData();
-        console.log('Sending updated data to /update:', updatedData);
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-        fetch('/update', {
-          method: 'POST',
-          headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrfToken   
-        },
-          body: JSON.stringify(updatedData)
-        })
-        .then(async res => {
-        const text = await res.text();
-        console.log("Raw /update response:", text);  // 🔍 打印看看是不是 HTML
-        try {
-          return JSON.parse(text);
-        } catch (e) {
-          throw new Error("Not valid JSON, response was: " + text.slice(0, 200));
+  document.addEventListener("DOMContentLoaded", () => {
+    const container = document.getElementById("hot");
+    console.log("Sending request to /data...");
+    // Fetch data from the /data endpoint
+    fetch("/data")
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Data received from /data:", data);
+        if (!data || !Array.isArray(data) || data.length === 0) {
+          alert("No data available to display.");
+          return;
         }
-      })
-        .then(res => {
-          if (res.status === 'success') {
-            alert('Saved!');
-          } else {
-            alert('Error: ' + res.error);
-          }
-        })
-        .catch(err => alert('Error saving data: ' + err.message));
-      });
 
-      // Export button event listener
-      document.getElementById('exportBtn').addEventListener('click', () => {
-        window.location.href = '/export';
+        // Define column headers based on field_mapping keys for display
+        const displayColumns = [
+          "first_name",
+          "last_name",
+          "salutation",
+          "organization",
+          "role",
+          "gender",
+          "city",
+          "state",
+          "country",
+          "business_phone",
+          "mobile_phone",
+          "email",
+          "sector",
+          "linkedin",
+        ];
+
+        const colHeaders = [
+          "FirstName",
+          "LastName",
+          "Salutation",
+          "Organization",
+          "Role",
+          "Gender",
+          "City (if outside AUS)",
+          "State AUS only",
+          "Country",
+          "Business Phone",
+          "Mobile Phone",
+          "EmailAddress",
+          "Sector",
+          "Linkedin",
+        ];
+        // Initialize Handsontable
+        const hot = new Handsontable(container, {
+          data: data,
+          rowHeaders: true,
+          colHeaders: colHeaders,
+          columns: displayColumns.map((col) => ({ data: col })),
+          filters: true,
+          dropdownMenu: true,
+          width: "100%", // Full width of the container
+          height: "calc(100vh - 80px)", // Full height minus space for buttons and padding
+          autoWrapRow: true,
+          autoWrapCol: true,
+          minRows: 1,
+          minSpareRows: 1,
+          licenseKey: "non-commercial-and-evaluation",
+        });
+
+        const updateBtn = document.getElementById("updateBtn");
+        const modal = document.getElementById("updateModal");
+        const cancelModal = document.getElementById("cancelModal");
+        const confirmUpdate = document.getElementById("confirmUpdate");
+        updateBtn.addEventListener("click", () => {
+          modal.classList.remove("hidden");
+          container.style.display = "none";
+        });
+
+        cancelModal.addEventListener("click", () => {
+          modal.classList.add("hidden");
+          container.style.display = "block";
+        });
+
+        const dataSource = document.getElementById("dataSource");
+        const linkedinWarning = document.getElementById("linkedinWarning");
+        dataSource.addEventListener("change", () => {
+          if (dataSource.value === "default") {
+            linkedinWarning.classList.remove("hidden");
+          } else {
+            linkedinWarning.classList.add("hidden");
+          }
+        });
+
+        if (dataSource.value === "default") {
+          linkedinWarning.classList.remove("hidden");
+        }
+
+        confirmUpdate.addEventListener("click", () => {
+          const updatedData = hot.getSourceData();
+          const selectedSource = document.getElementById("dataSource").value;
+          console.log("Sending updated data to /update:", updatedData);
+          const csrfToken = document.querySelector(
+            'meta[name="csrf-token"]'
+          ).content;
+
+          fetch("/update", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": csrfToken,
+            },
+            body: JSON.stringify(updatedData),
+          })
+            .then(async (res) => {
+              const text = await res.text();
+              console.log("Raw /update response:", text);
+              try {
+                return JSON.parse(text);
+              } catch (e) {
+                throw new Error(
+                  "Not valid JSON, response was: " + text.slice(0, 200)
+                );
+              }
+            })
+            .then((res) => {
+              if (res.status === "success") {
+                alert("Saved!");
+              } else {
+                alert("Error: " + res.error);
+              }
+            })
+            .catch((err) => alert("Error saving data: " + err.message));
+        });
+
+        // Export button event listener
+        // document.getElementById("exportBtn").addEventListener("click", () => {
+        //   window.location.href = "/export";
+        // });
+      })
+      .catch((err) => {
+        console.error("Error fetching data:", err);
+        alert("Failed to load data: " + err.message);
       });
-    })
-    .catch(err => {
-      console.error('Error fetching data:', err);
-      alert('Failed to load data: ' + err.message);
-    });
-});
+  });
 </script>
 {% endblock %}

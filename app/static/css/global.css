@@ -9,6 +9,7 @@ body {
   background-color: #6200ee;
   border-radius: 10px;
   color: #ffffff;
+  cursor: pointer;
 }
 
 input:focus {

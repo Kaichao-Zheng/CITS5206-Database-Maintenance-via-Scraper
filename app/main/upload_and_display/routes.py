@@ -53,11 +53,8 @@ def upload():
         db.session.execute(sa.insert(Log).values()) # TODO: implement logging bad lines
         db.session.commit()
         df = pd.read_csv(text_file, engine="c")
-
         df.columns = df.columns.str.strip()
-
         df = df[[col for col in df.columns if col in field_mapping]].rename(columns=field_mapping)
-
         
         # Validate required fields
         required_fields = ["first_name", "last_name"]
@@ -82,7 +79,7 @@ def upload():
         db.session.commit()
 
         flash(f"Uploaded {len(people)} people successfully!", "success")
-        return redirect(url_for("upload_and_display.excel_display")) # TODO: redirect to update
+        return redirect(url_for("upload_and_display.excel_display")) 
 
     except Exception as e:
         db.session.rollback()
@@ -96,7 +93,7 @@ def get_data():
     data = [p.as_dict() for p in people]  
     return jsonify(data)
 
-@ud.route("/update",methods=["POST"])
+@ud.route("/update",methods=["POST"]) #TODO: update from linkedin or government website
 @login_required
 def update_data():
     data = request.json

@@ -35,23 +35,6 @@ def logout():
     logout_user()
     return redirect(url_for('main.index'))
 
-field_mapping = {
-            "FirstName": "first_name",
-            "LastName": "last_name",
-            "Salutation": "salutation",
-            "Organization": "organization",
-            "Role": "role",
-            "Gender": "gender",
-            "City (if outside AUS)": "city",
-            "State AUS only": "state",
-            "Country": "country",
-            "Business Phone": "business_phone",
-            "Mobile Phone": "mobile_phone",
-            "EmailAddress": "email",
-            "Sector": "sector",
-            "Linkedin": "linkedin"
-        }
-
 bad_lines = []
 def handle_bad_line(line):
     # line is a list of strings (the row values), CSV is not uniform.
@@ -123,6 +106,7 @@ def settings():
         return redirect(url_for("main.index"))
 
     return render_template("settings.html", nav="settings", form=form)
+
 @bp.route("/logs")
 @login_required
 def logs():
