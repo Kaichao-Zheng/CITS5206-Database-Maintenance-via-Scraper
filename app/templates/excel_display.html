@@ -155,7 +155,10 @@
               "Content-Type": "application/json",
               "X-CSRFToken": csrfToken,
             },
-            body: JSON.stringify(updatedData),
+            body: JSON.stringify({
+              source: selectedSource,
+              data: updatedData,
+            }),
           })
             .then(async (res) => {
               const text = await res.text();

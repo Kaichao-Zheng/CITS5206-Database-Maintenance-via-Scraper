@@ -11,6 +11,7 @@ class User(UserMixin,db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     username: so.Mapped[str] = so.mapped_column(sa.String(64), index=True,
                                                 unique=True,nullable=False)
+    email: so.Mapped[Optional[str]] = so.mapped_column(sa.String(120), index=True, unique=True)
     password_hash: so.Mapped[str] = so.mapped_column(sa.String(256))
 
     def __repr__(self):
@@ -56,6 +57,8 @@ class People(db.Model):
     
 class Log(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    is_success: so.Mapped[Optional[bool]] = so.mapped_column(sa.Boolean, default=True)
+    result: so.Mapped[Optional[dict]] = so.mapped_column(sa.JSON)
     create_at: so.Mapped[Optional[datetime]] = so.mapped_column(sa.DateTime, default=datetime.utcnow)
 
     def __repr__(self):

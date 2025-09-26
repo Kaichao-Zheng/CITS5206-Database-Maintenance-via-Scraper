@@ -18,13 +18,13 @@
     </a>
 
     <a
-      href="{{ url_for('main.settings') }}"
+      href="{{ url_for('auth.settings') }}"
       class="{% if nav == 'settings' %}text-violet-700 {% else %}text-gray-700{% endif %}"
     >
       Settings
     </a>
     <a
-      href="{{ url_for('main.logout') }}"
+      href="{{ url_for('auth.logout') }}"
       class="{% if nav == 'logout' %}text-violet-700 {% else %}text-gray-700{% endif %}"
     >
       Log out
