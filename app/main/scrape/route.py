@@ -32,6 +32,27 @@ def conditional_get_people_names_for_url_searching(number: int):
     session.close()
     return result
 
+LINKEDIN_EMAIL = os.getenv("LINKEDIN_EMAIL")
+LINKEDIN_PASSWORD = os.getenv("LINKEDIN_PASSWORD")
+
+def conditional_get_people_names_for_url_searching(number: int):
+    session = db.session
+
+    
+    people_records = session.query(People)
+
+    result = []
+    for person in people_records:
+        if person.linkedin:
+            print(f"skip {person.first_name} {person.last_name} cause the url already exists")
+            continue
+        result.append(f"{person.first_name} {person.last_name}")
+        if len(result) >= number:
+            break
+
+    session.close()
+    return result
+
 @sc.route('/scrape_and_store_proxies', methods=['GET'])
 @login_required
 def scrape_and_store_proxies():
@@ -113,6 +134,70 @@ def scrape_linkedin():
         return jsonify({
             "message": "Scraping successful",
             "results": formatted_results
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@sc.route('/scrape_information', methods=['GET'])
+def scrape_linkedin_information():
+    try:
+        number = request.args.get('number', default=10, type=int)
+        
+        # Step 1: Get names
+        names = conditional_get_people_names_for_information_searching(number)
+        if not names:
+            return jsonify({"error": "No names found to scrape"}), 400
+
+        # Step 2: Get profile URLs from Profile table
+        profile_map = {}
+        for full_name in names:
+            name_parts = full_name.strip().split()
+            if not name_parts:
+                continue
+            first_name = name_parts[0]
+            last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else ""
+
+            profile = db.session.query(Profile).filter(
+                sa.func.lower(Profile.first_name) == first_name.lower(),
+                sa.func.lower(Profile.last_name) == last_name.lower()
+            ).first()
+
+            if profile and profile.url:
+                profile_map[f"{first_name} {last_name}".strip()] = profile.url
+            else:
+                print(f"⚠️ No profile URL found for {full_name}")
+
+        if not profile_map:
+            return jsonify({"error": "No matching profiles with URLs found"}), 404
+
+        # Step 3: Scrape profiles
+        scraped_results = scrape_profiles(profile_map, LINKEDIN_EMAIL, LINKEDIN_PASSWORD)
+
+        # Step 4: Update People table with scraped data
+        for name, info in scraped_results.items():
+            name_parts = name.strip().split()
+            first_name = name_parts[0]
+            last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else ""
+
+            person = db.session.query(People).filter(
+                sa.func.lower(People.first_name) == first_name.lower(),
+                sa.func.lower(People.last_name) == last_name.lower()
+            ).first()
+
+            if person:
+                person.organization = info.get("company", "")
+                person.role = info.get("position", "")
+                person.city = info.get("location", "")
+            else:
+                print(f"⚠️ No matching People record to update for {name}")
+
+        db.session.commit()
+
+        # Step 5: Return scraped results
+        return jsonify({
+            "message": "Scraping successful",
+            "results": scraped_results
         }), 200
 
     except Exception as e:
