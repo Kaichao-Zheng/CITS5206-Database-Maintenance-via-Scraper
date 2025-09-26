@@ -11,6 +11,7 @@ import os
 import sqlalchemy as sa
 from .helper.scrape_information import scrape_profiles
 
+
 LINKEDIN_EMAIL = os.getenv("LINKEDIN_EMAIL")
 LINKEDIN_PASSWORD = os.getenv("LINKEDIN_PASSWORD")
 
@@ -32,20 +33,19 @@ def conditional_get_people_names_for_url_searching(number: int):
     session.close()
     return result
 
-LINKEDIN_EMAIL = os.getenv("LINKEDIN_EMAIL")
-LINKEDIN_PASSWORD = os.getenv("LINKEDIN_PASSWORD")
 
-def conditional_get_people_names_for_url_searching(number: int):
+def conditional_get_people_names_for_information_searching(number: int):
     session = db.session
 
-    
-    people_records = session.query(People)
+    people_records = session.query(People).order_by(People.id)  
 
     result = []
     for person in people_records:
-        if person.linkedin:
-            print(f"skip {person.first_name} {person.last_name} cause the url already exists")
+       
+        if person.organization and person.role and person.city:
+            print(f"{person.first_name} {person.last_name} has already enough information")
             continue
+
         result.append(f"{person.first_name} {person.last_name}")
         if len(result) >= number:
             break
