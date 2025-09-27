@@ -5,7 +5,7 @@ from app import db
 from app.models import IP, People, Profile
 from flask import Flask, render_template,flash, redirect,url_for,request, jsonify,send_file
 from sqlalchemy.exc import SQLAlchemyError
-from app.main.scraping import sc
+from app.main.scrape import sc
 from flask_login import current_user, login_user,logout_user,login_required
 import os
 import sqlalchemy as sa

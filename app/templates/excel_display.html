@@ -191,6 +191,19 @@ if (doneInfoBtn) {
         window.location.href = '/export';
       });
     })
+        // Close modal when clicking outside the modal content
+  scrapeModal.addEventListener('click', (e) => {
+    if (e.target === scrapeModal) {
+      console.log('Closing modal by clicking outside');
+      scrapeModal.style.display = 'none';
+    }
+  });
+  scrapeInfoModal.addEventListener('click', (e) => {
+    if (e.target === scrapeInfoModal) {
+      console.log('Closing info modal by clicking outside');
+      scrapeInfoModal.style.display = 'none';
+    }
+  })
     .catch(err => {
       console.error('Error fetching data:', err);
       alert('Failed to load data: ' + err.message);
