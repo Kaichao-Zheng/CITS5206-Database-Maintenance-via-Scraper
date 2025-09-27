@@ -5,6 +5,24 @@
   <button id="exportBtn" class="button cursor-pointer w-24 bg-violet-700 text-white rounded-md py-2 hover:bg-violet-800 transition-colors duration-300">⬇️ Export</button>
 </div>
 
+<!-- Modal for scrape url  -->
+<div id="scrapeModal" class="modal">
+  <div class="modal-content">
+    <h3>Enter Number of Profiles to Scrape</h3>
+    <input type="number" id="numberLimitInput" min="1" placeholder="Enter number limit" required>
+    <button id="doneBtn">Done</button>
+  </div>
+</div>
+
+<!-- Modal for Scrape Info -->
+<div id="scrapeInfoModal" class="modal">
+  <div class="modal-content">
+    <h3>Enter Number of Profiles to Scrape Information</h3>
+    <input type="number" id="numberLimitInfoInput" min="1" placeholder="Enter number limit" required>
+    <button id="doneInfoBtn">Done</button>
+  </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const container = document.getElementById('hot');
@@ -52,7 +70,22 @@ document.addEventListener('DOMContentLoaded', () => {
         minSpareRows: 1,
         licenseKey: 'non-commercial-and-evaluation'
       });
+      // Scrape button event listener
+scrapeBtn.addEventListener('click', () => {
+  console.log('Scrape button clicked');
+  scrapeModal.style.display = 'flex';
+  numberLimitInput.value = '';
+  numberLimitInput.focus();
+});
 
+if (scrapeInformationBtn && scrapeInfoModal && numberLimitInfoInput) {
+    scrapeInformationBtn.addEventListener('click', () => {
+      console.log('Scrape Information button clicked');
+      scrapeInfoModal.style.display = 'flex';
+      numberLimitInfoInput.value = '';
+      numberLimitInfoInput.focus();
+    });
+  }
       // Save button event listener
       document.getElementById('saveBtn').addEventListener('click', () => {
         const updatedData = hot.getSourceData();
