@@ -39,3 +39,11 @@ input:focus {
   width: 100%;
   padding: 0.5rem 1rem;
 }
+
+/* Invalid email cell styling */
+.invalid-email {
+  color: #dc3545 !important;
+  background-color: #f8d7da !important;
+  font-weight: bold !important;
+  border: 1px solid #dc3545 !important;
+}
