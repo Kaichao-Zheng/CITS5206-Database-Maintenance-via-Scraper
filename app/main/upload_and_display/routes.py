@@ -2,7 +2,7 @@ from app.main.upload_and_display import ud
 from flask import Flask, render_template,flash, redirect,url_for,request, jsonify,send_file
 import sqlalchemy as sa
 from app import db
-from app.models import User,People, Log, LogDetail
+from app.models import User,People, Log, LogDetail,Profile, ScrapeOutcome_1
 from app.main.forms import LoginForm,UploadForm
 from flask_login import current_user, login_user,logout_user,login_required
 import pandas as pd
@@ -72,6 +72,34 @@ def upload():
                 df[expected_col] = "" 
 
         people = df.to_dict(orient="records")
+        for person in people:
+            # Find corresponding Profile by first_name and last_name
+            profile = Profile.query.filter_by(
+                first_name=person.get("first_name"), 
+                last_name=person.get("last_name")
+            ).first()
+            
+            if profile:
+                # If a matching profile is found, update the linkedin field in People
+                person["linkedin"] = profile.url
+            else:
+                pass  
+               # Find corresponding ScrapeOutcome_1 by first_name and last_name
+            scrape_outcome = db.session.query(ScrapeOutcome_1).filter(
+                sa.func.lower(ScrapeOutcome_1.first_name) == str(person.get("first_name", "")).lower(),
+                sa.func.lower(ScrapeOutcome_1.last_name) == str(person.get("last_name", "")).lower()
+            ).first()
+
+            if scrape_outcome:
+                # Update organization, role, and city from ScrapeOutcome_1
+                person["organization"] = scrape_outcome.organization or ""
+                person["role"] = scrape_outcome.role or ""
+                person["city"] = scrape_outcome.city or ""
+            else:
+                # Ensure fields are set to empty string if no match is found
+                person["organization"] = person.get("organization", "")
+                person["role"] = person.get("role", "")
+                person["city"] = person.get("city", "") 
 
         # Clear and insert
         db.session.query(People).delete()
@@ -105,7 +133,28 @@ def update_data():
         return jsonify({"error": "No data provided"}), 400
     try:
         db.session.query(People).delete()
+        scrape_outcome_data = []
+        for item in data:
+            # Map fields for ScrapeOutcome_1, setting missing fields to None
+            scrape_item = {
+                "first_name": item.get("first_name"),
+                "last_name": item.get("last_name"),
+                "organization": item.get("organization"),
+                "role": item.get("role"),
+                "city": item.get("city"),
+                "linkedin": item.get("linkedin"),
+                "salutation": None,
+                "gender": None,
+                "state": None,
+                "country": None,
+                "business_phone": None,
+                "mobile_phone": None,
+                "email": None,
+                "sector": None
+            }
+            scrape_outcome_data.append(scrape_item)
         db.session.bulk_insert_mappings(People, data)
+        db.session.bulk_insert_mappings(ScrapeOutcome_1, scrape_outcome_data)
         db.session.commit()
         print("Update successful")
         return jsonify({"status": "success"})
