@@ -1,0 +1,22 @@
+{% extends 'layout.html' %} {% block main_content %}
+<div class="flex flex-col items-center justify-center w-full h-full gap-8">
+  <form
+    action=""
+    method="post"
+    novalidate
+    class="bg-white rounded-xl flex flex-col gap-8 items-center p-8"
+  >
+    {{ form.hidden_tag() }}
+    <h1 class="text-2xl font-bold">Change Email</h1>
+    <div>
+      <p class="mb-2">New email address</p>
+      <div class="border border-violet-700 rounded-sm p-2 outline-none">
+        {{ form.new_email(size=32) }}
+      </div>
+    </div>
+    {% for error in form.new_email.errors %}
+    <span class="text-red-500">[{{ error }}]</span>
+    {% endfor %} {{ form.submit(class_="button") }}
+  </form>
+</div>
+{% endblock %}
