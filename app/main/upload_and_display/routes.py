@@ -180,7 +180,7 @@ def process_update_task(app,user_email, source, log_id):
 @ud.route("/updating/<int:log_id>")
 @login_required
 def updating(log_id):
-    return render_template("updating.html", log_id=log_id)
+    return render_template("updating.html", log_id=log_id, nav="workspace")
 
 
 @ud.route("/update_progress/<int:log_id>")
@@ -207,4 +207,4 @@ def update_progress(log_id):
 @ud.route("/update_complete")
 @login_required
 def update_complete():
-    return render_template("update-complete.html")
+    return render_template("update-complete.html", nav="workspace")
