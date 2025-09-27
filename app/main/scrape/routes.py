@@ -2,7 +2,7 @@ import time
 from .helper.ip_scraping import scrape_https_proxies 
 from .helper.profile_url_scrape import scrape_linkedin_people_search
 from app import db
-from app.models import IP, People, Profile
+from app.models import IP, People, Profile, ScrapeOutcome_1
 from flask import Flask, render_template,flash, redirect,url_for,request, jsonify,send_file
 from sqlalchemy.exc import SQLAlchemyError
 from app.main.scrape import sc
@@ -123,6 +123,7 @@ def scrape_linkedin():
                 people_match.linkedin = url
             else:
                 print(f"No matching People record found for {first_name} {last_name}")
+             
 
             # Add to formatted result
             full_name_key = f"{first_name} {last_name}".strip()
@@ -191,6 +192,24 @@ def scrape_linkedin_information():
                 person.city = info.get("location", "")
             else:
                 print(f"⚠️ No matching People record to update for {name}")
+            # Save to ScrapeOutcome_1 table
+            scrape_outcome = ScrapeOutcome_1(
+                first_name=first_name,
+                last_name=last_name,
+                organization=info.get("company", None),
+                role=info.get("position", None),
+                city=info.get("location", None),
+                linkedin=None,
+                salutation=None,  # Not provided by scrape_profiles
+                gender=None,      # Not provided by scrape_profiles
+                state=None,       # Not provided by scrape_profiles
+                country=None,     # Not provided by scrape_profiles
+                business_phone=None,  # Not provided by scrape_profiles
+                mobile_phone=None,    # Not provided by scrape_profiles
+                email=None,           # Not provided by scrape_profiles
+                sector=None           # Not provided by scrape_profiles
+            )
+            db.session.add(scrape_outcome)
 
         db.session.commit()
 
