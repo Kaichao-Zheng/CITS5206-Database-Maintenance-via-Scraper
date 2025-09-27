@@ -70,6 +70,60 @@ document.addEventListener('DOMContentLoaded', () => {
         minSpareRows: 1,
         licenseKey: 'non-commercial-and-evaluation'
       });
+
+// Helper function to handle scraping/updating and table refresh
+  const handleScrapeAction = (modal, input, endpoint, action) => {
+    const numberLimit = parseInt(input.value);
+    if (!numberLimit || numberLimit < 1) {
+      alert('Please enter a valid number greater than 0.');
+      return;
+    }
+    console.log(`Calling ${endpoint} with number_limit=${numberLimit}`);
+    fetch(`${endpoint}?number=${numberLimit}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    })
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        if (data.message === 'Scraping successful' || data.status === 'success') {
+          alert(`${action} Successful! ${Object.keys(data.results || {}).length} profiles processed.`);
+          console.log(`${action} Results:`, data.results);
+          if (hot) {
+            fetch('/data')
+              .then(res => {
+                if (!res.ok) throw new Error(`Refresh HTTP error: ${res.status}`);
+                return res.json();
+              })
+              .then(newData => {
+                if (newData && Array.isArray(newData)) {
+                  hot.loadData(newData);
+                  console.log('Table data refreshed');
+                } else {
+                  alert('Invalid data format received.');
+                }
+              })
+              .catch(err => {
+                console.error('Error refreshing table:', err);
+                alert('Failed to refresh table: ' + err.message);
+              });
+          } else {
+            alert('Table not initialized.');
+          }
+        } else {
+          alert('Error: ' + (data.error || 'Unknown error'));
+        }
+      })
+      .catch(err => {
+        console.error(`Error calling ${endpoint}:`, err);
+        alert(`Failed to ${action.toLowerCase()}: ${err.message}`);
+      })
+      .finally(() => {
+        modal.style.display = 'none';
+      });
+  };
       // Scrape button event listener
 scrapeBtn.addEventListener('click', () => {
   console.log('Scrape button clicked');
@@ -84,6 +138,20 @@ if (scrapeInformationBtn && scrapeInfoModal && numberLimitInfoInput) {
       scrapeInfoModal.style.display = 'flex';
       numberLimitInfoInput.value = '';
       numberLimitInfoInput.focus();
+    });
+  }
+
+  // Done button for Scrape URL
+  if (doneBtn && scrapeModal && numberLimitInput) {
+    doneBtn.addEventListener('click', () => {
+      handleScrapeAction(scrapeModal, numberLimitInput, '/scrape_profile_url', 'Scrape URL');
+    });
+  }
+
+   // Done button for Scrape Info
+if (doneInfoBtn) {
+    doneInfoBtn.addEventListener('click', () => {
+      handleScrapeAction(scrapeInfoModal, numberLimitInfoInput, '/scrape_information', 'Scrape Information');
     });
   }
       // Save button event listener
