@@ -58,7 +58,7 @@ class People(db.Model):
 class Log(db.Model):
     '''
     result: summary of final outcome e.g. Successfully updated 1000 records. Failed 12 records.
-    status: status of this record processing (e.g., "completed", "error", or "in progress").
+    status: status of this record processing (e.g., "completed", "error", or "in_progress").
     created_at: when the task started.
     '''
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
@@ -73,7 +73,7 @@ class LogDetail(db.Model):
     '''
     log_id: foreign key to Log.id
     record_name: name of the record being processed (e.g., "John Doe")
-    status: status of this record processing (e.g., "success", "error", or "in progress").
+    status: status of this record processing (e.g., "success", "error").
     source: source URL (if scraping).
     detail: Extra info (e.g. raw scraped fields, exception trace).
     created_at: when the task started.

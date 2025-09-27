@@ -189,9 +189,9 @@ def update_progress(log_id):
     log = db.session.get(Log, log_id)
     if not log:
         return jsonify({"error": "Log not found"}), 404
-
+    people = db.session.query(People).all()
     details = db.session.query(LogDetail).filter_by(log_id=log_id).all()
-    total = len(details)
+    total = len(people)
     completed = sum(1 for d in details if d.status in ("success", "error"))
     
     return jsonify({
