@@ -1,5 +1,5 @@
 from flask import Blueprint
 
-sc = Blueprint("scraping", __name__)
+sc = Blueprint("scrape", __name__)
 
-from app.main.scraping import routes
+from app.main.scrape import routes

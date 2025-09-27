@@ -7,7 +7,7 @@
   >
     🔄 Update
   </button>
-  <!-- <button id="exportBtn" class="button cursor-pointer w-24 bg-violet-700 text-white rounded-md py-2 hover:bg-violet-800 transition-colors duration-300">⬇️ Export</button> -->
+
   <div
     id="updateModal"
     class="hidden fixed inset-0 bg-violet-300 bg-opacity-50 flex items-center justify-center z-99"
@@ -22,7 +22,7 @@
         id="dataSource"
         class="w-full border rounded-md px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-violet-500"
       >
-        <option value="default">Linkedin</option>
+        <option value="linkedin">Linkedin</option>
         <option value="gw">Government Website</option>
       </select>
       <p id="linkedinWarning" class="hidden mb-3 text-sm text-red-600">
@@ -130,14 +130,14 @@
         const dataSource = document.getElementById("dataSource");
         const linkedinWarning = document.getElementById("linkedinWarning");
         dataSource.addEventListener("change", () => {
-          if (dataSource.value === "default") {
+          if (dataSource.value === "linkedin") {
             linkedinWarning.classList.remove("hidden");
           } else {
             linkedinWarning.classList.add("hidden");
           }
         });
 
-        if (dataSource.value === "default") {
+        if (dataSource.value === "linkedin") {
           linkedinWarning.classList.remove("hidden");
         }
 
@@ -173,18 +173,15 @@
             })
             .then((res) => {
               if (res.status === "success") {
-                alert("Saved!");
+                if (res.log_id) {
+                  window.location.href = `/updating/${res.log_id}`;
+                }
               } else {
                 alert("Error: " + res.error);
               }
             })
             .catch((err) => alert("Error saving data: " + err.message));
         });
-
-        // Export button event listener
-        // document.getElementById("exportBtn").addEventListener("click", () => {
-        //   window.location.href = "/export";
-        // });
       })
       .catch((err) => {
         console.error("Error fetching data:", err);

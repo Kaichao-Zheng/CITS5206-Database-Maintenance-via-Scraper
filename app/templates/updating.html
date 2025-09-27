@@ -1,0 +1,53 @@
+{% extends 'layout.html' %} {% block main_content %}
+<div class="flex flex-col gap-4 max-w-2xl mx-auto mt-6">
+  <h2 class="text-2xl font-semibold mb-2">Scraping Progress</h2>
+
+  <div class="w-full bg-gray-200 rounded-full h-6 overflow-hidden shadow-inner">
+    <div
+      id="bar"
+      class="h-6 bg-green-500 rounded-full transition-all duration-500"
+    ></div>
+  </div>
+
+  <div id="status" class="mt-2 text-gray-700 font-medium">Starting...</div>
+
+  <ul id="details" class="mt-4 space-y-1 text-gray-600"></ul>
+</div>
+
+<script>
+  const logId = {{ log_id }}; // passed from Flask render_template
+
+  function updateProgress() {
+    fetch(`/update_progress/${logId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        document.getElementById("status").innerText = data.status;
+        let percent = data.total ? (data.completed / data.total) * 100 : 0;
+        document.getElementById("bar").style.width = percent + "%";
+
+        // Show per-record details
+        let detailsList = document.getElementById("details");
+        detailsList.innerHTML = "";
+        data.details.forEach((d) => {
+          let li = document.createElement("li");
+          li.className = "flex justify-between px-2 py-1 bg-gray-100 rounded shadow-sm";
+          li.innerText = `${d.record_name} → ${d.status}`;
+          detailsList.appendChild(li);
+        });
+
+        if (data.completed !== data.total) {
+          setTimeout(updateProgress, 1000);
+        } else {
+          document.getElementById("status").classList.add("text-green-600", "font-bold");
+          window.location.href = "/update_complete";
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching progress:", err);
+        setTimeout(updateProgress, 3000); // retry after 3s if error
+      });
+  }
+
+  updateProgress();
+</script>
+{% endblock %}
