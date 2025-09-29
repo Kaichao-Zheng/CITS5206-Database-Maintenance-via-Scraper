@@ -29,6 +29,20 @@
     >
       Log out
     </a>
+
+    <a
+      href="{{ url_for('scrape_additional.update_local_db') }}"
+      class="mt-auto bg-violet-700 text-white px-4 py-2 rounded-lg hover:bg-violet-800 text-center"
+    >
+      Update Database
+    </a>
+    {% if last_update %}
+    <span class="text-xs text-gray-500 mt-1"
+      >Last updated: {{ last_update }}</span
+    >
+    {% else %}
+    <span class="text-xs text-red-500 mt-1">No local database found</span>
+    {% endif %}
   </div>
   <div class="grow flex flex-col">
     <div

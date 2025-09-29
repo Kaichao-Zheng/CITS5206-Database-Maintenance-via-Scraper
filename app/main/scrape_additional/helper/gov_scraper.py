@@ -1,8 +1,20 @@
 import requests, re, concurrent.futures
 from bs4 import BeautifulSoup
 import pandas as pd
-from gov_scraper_person import Person
+from .gov_scraper_person import Person
+from .gov_database import connect_db, commit_batch, update_last_update, get_last_update
 
+
+"""
+This script scrapes from https://www.directory.gov.au to extract government profiles
+and updates the government_profiles.db SQLite database with the latest data.
+
+Always use the update_gov_database() function before searching the database to ensure
+you have the most recent information.
+"""
+
+records = []
+baseURL = 'https://www.directory.gov.au'
 
 # Parse the organisations from the response
 def parseOrganisations(response, element, elementClass):
@@ -65,6 +77,7 @@ def parseKeyPeople(element, organisation, location):
 
 # Appends a person object to the records list
 def appendPerson(person_obj):
+    global records
     records.append({
         "Salutation": person_obj.salutation,
         "FirstName": person_obj.fname,
@@ -160,19 +173,39 @@ def scrape_organisation(result):
                         for board_result in board_results:
                             scrapeBoards(board_result, "Current board appointments", organisation, location, department=board_name)
 
-# Main loop to iterate through each organisation
-records = []
+# Updates the government_profiles.db database with the latest data
+def update_gov_database():
 
-baseURL = 'https://www.directory.gov.au'
-page = getPage(baseURL + '/commonwealth-entities-and-companies')
-results = parseOrganisations(page, "td", "views-field views-field-title")
+    global baseURL
+    page = getPage(baseURL + '/commonwealth-entities-and-companies')
+    results = parseOrganisations(page, "td", "views-field views-field-title")
 
-if __name__ == '__main__':
+    conn, cursor = connect_db()
+
     # Use a thread pool to concurrently scrape
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        # map blocks until all tasks are done
         executor.map(scrape_organisation, results)
 
-df = pd.DataFrame(records)
-excel_filename = "government_profiles.xlsx"
-df.to_excel(excel_filename, index=False)
-print(f"\n✅ Done. Exported {len(records)} profiles to {excel_filename}")
+    commit_batch(conn, cursor, records)
+
+    update_last_update(cursor)
+    conn.commit()
+    conn.close()
+
+def search_database(fname, lname):
+    conn, cursor = connect_db()
+
+    cursor.execute("""
+        SELECT * FROM people WHERE FirstName = ? AND LastName = ?
+    """, (fname, lname))
+
+    results = cursor.fetchall()
+
+    if results:
+        print(f"Found {len(results)} record(s) for {fname} {lname}.")
+    else:
+        print(f"No records found for {fname} {lname}.")
+
+    conn.close()
+    return results
