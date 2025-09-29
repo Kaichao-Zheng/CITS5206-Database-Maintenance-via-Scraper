@@ -6,59 +6,7 @@
 </div>
 
 <script>
-
 document.addEventListener('DOMContentLoaded', () => {
-  // Email validation function using validator.js
-  const isValidEmail = (email) => {
-    if (!email || typeof email !== 'string') return false;
-    // Use validator.js for comprehensive email validation
-    return validator.isEmail(email.trim(), {
-      allow_display_name: false,
-      require_display_name: false,
-      allow_utf8_local_part: true,
-      require_tld: true,
-      ignore_max_length: false
-    });
-  };
-
-  const wrongEmailAddressRenderer = (instance, td, row, col, prop, value, cellProperties) => {
-    // Apply default text renderer first
-    Handsontable.renderers.TextRenderer(instance, td, row, col, prop, value, cellProperties);
-
-    // Get row data to check FirstName and LastName
-    const rowData = instance.getDataAtRow(row);
-    const firstName = rowData[0]; // FirstName is column 0
-    const lastName = rowData[1];  // LastName is column 1
-
-    // Skip validation if FirstName or LastName is empty
-    if (!firstName || !lastName || 
-        firstName.toString().trim() === '' || 
-        lastName.toString().trim() === '') {
-      // Remove any existing invalid styling
-      td.classList.remove('invalid-email');
-      td.style.color = '';
-      td.style.backgroundColor = '';
-      td.style.fontWeight = '';
-      return; // Skip email validation
-    }
-
-    // Check if email is invalid (only when FirstName and LastName exist)
-    if (!isValidEmail(value)) {
-      // Add class for styling invalid emails
-      td.classList.add('invalid-email');
-      td.style.color = '#dc3545'; // Red color
-      td.style.backgroundColor = '#f8d7da'; // Light red background
-      td.style.fontWeight = 'bold';
-    } else {
-      // Remove invalid styling if email becomes valid
-      td.classList.remove('invalid-email');
-      td.style.color = '';
-      td.style.backgroundColor = '';
-      td.style.fontWeight = '';
-    }
-  };
-
-  Handsontable.renderers.registerRenderer('wrongEmailAddressRenderer', wrongEmailAddressRenderer);
   const container = document.getElementById('hot');
   console.log('Sending request to /data...');
   // Fetch data from the /data endpoint
@@ -98,15 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
         dropdownMenu: true,
         width: '100%', // Full width of the container
         height: 'calc(100vh - 80px)', // Full height minus space for buttons and padding
-        cells(row, col) {
-          const cellProperties = {};
-          const data = this.instance.getData();
-          console.log('Handsontable Data:', data);
-          if (col === 11) { // EmailAddress is the 12th column (index 11)
-            cellProperties.renderer = 'wrongEmailAddressRenderer'; // Use string reference
-          }
-          return cellProperties;
-        },
         autoWrapRow: true,
         autoWrapCol: true,
         minRows: 1,
@@ -129,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .then(async res => {
         const text = await res.text();
-        console.log("Raw /update response:", text);  // check if the response is valid JSON
+        console.log("Raw /update response:", text);  // 🔍 打印看看是不是 HTML
         try {
           return JSON.parse(text);
         } catch (e) {
