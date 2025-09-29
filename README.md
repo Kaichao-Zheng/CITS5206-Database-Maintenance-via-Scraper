@@ -35,11 +35,11 @@
 
    ```bash
    # create environment
-   python3.10 -m venv .venv  #or other name you like
+   python3.10 -m venv .venv     # or other name you like
 
    # activate environment
    source .venv/bin/activate    # macOS/Linux
-   .\.venv\Scripts\activate     # Windows
+   .\.venv\Scripts\activate     # Windows Powershell
    ```
 
 2. Or with conda:
@@ -47,7 +47,7 @@
    ```bash
    # create environment
    conda create -n yourEnvName python=3.9.18
-
+   
    # activate environment
    conda activate yourEnvName
    ```
@@ -62,7 +62,7 @@
 
   ```bash
   pip install <package-name>
-
+  
   # commit in requirements.txt
   pip freeze > requirements.txt
   ```
@@ -72,8 +72,14 @@
 Create a `.env` file in the root directory:
 
 ```env
+# Password Login
 LINKEDIN_EMAIL=some-email@email.address
 LINKEDIN_PASSWORD=your_linkedin_password
+
+# Cookie Login
+LI_AT_COOKIE=your_linkedin_cookie
+
+# Web Application Password
 ADMIN_PASSWORD=app_login_password
 
 FLASK_APP=run.py
@@ -85,6 +91,7 @@ FLASK_ENV=
 # CSRF protection; leave blank for default dev key
 SECRET_KEY=
 ```
+[How to sign in LinkedIn using a cookie?](how-to-sign-in-linkedin-using-a-cookie.md)
 
 ### Create database and configure schema
 
@@ -94,10 +101,25 @@ SECRET_KEY=
 flask db upgrade
 ```
 
-### Start the program
+### Start the web application
 
 ```bash
 python add_default_user.py # add default admin user when you start the program for the first time
 flask run # Or
 python run.py
 ```
+
+## User Scraping
+
+```python
+person = Person("https://www.linkedin.com/in/joey-sham-aa2a50122", driver=driver, scrape=False, close_on_complete=False)
+```
+
+- `scrape=False`: it doesn't automatically scrape the profile, but Chrome will open the linkedin page anyways.
+
+- when you run `person.scrape()`, it'll scrape and close the browser.
+- `close_on_complete=False` keeps browser open to scrape next profile.
+
+## URL
+
+- The URL pattern should be `https://www.linkedin.com/in/joey-sham-aa2a50122` so I trim the strings after and include `?mini`

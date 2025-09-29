@@ -5,6 +5,7 @@
 venv/
 .venv/
 .env
+.env.local
 
 # Ignore the backup files of .drawio
 *.bkp
