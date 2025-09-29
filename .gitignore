@@ -19,3 +19,6 @@ test-*.py
 
 #db
 *.db
+
+# linkedin cookies file
+my_linkedin_cookies.json

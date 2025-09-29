@@ -10,7 +10,7 @@
 
   <div
     id="updateModal"
-    class="hidden fixed inset-0 bg-violet-300 bg-opacity-50 flex items-center justify-center z-99"
+    class="hidden fixed inset-0 bg-opacity-50 flex items-center justify-center z-2000"
   >
     <div class="bg-white rounded-lg shadow-lg w-96 p-6">
       <h2 class="text-lg font-semibold mb-4">Update Data</h2>
@@ -25,10 +25,17 @@
         <option value="linkedin">Linkedin</option>
         <option value="gw">Government Website</option>
       </select>
-      <p id="linkedinWarning" class="hidden mb-3 text-sm text-red-600">
-        ⚠️ Please make sure you have less than 30 rows in case your IP gets
-        banned by LinkedIn.
-      </p>
+      <div id="linkedinWarning" class="hidden mb-3 text-sm text-red-600">
+        <p>Enter Number of Profiles to Scrape</p>
+        <input
+          type="number"
+          id="numberLimitInput"
+          min="1"
+          placeholder="10"
+          required
+          class="w-full border rounded-md px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-violet-500"
+        />
+      </div>
 
       <div class="flex justify-end gap-2">
         <button
@@ -119,12 +126,12 @@
         const confirmUpdate = document.getElementById("confirmUpdate");
         updateBtn.addEventListener("click", () => {
           modal.classList.remove("hidden");
-          container.style.display = "none";
+          // container.style.display = "none";
         });
 
         cancelModal.addEventListener("click", () => {
           modal.classList.add("hidden");
-          container.style.display = "block";
+          // container.style.display = "block";
         });
 
         const dataSource = document.getElementById("dataSource");
