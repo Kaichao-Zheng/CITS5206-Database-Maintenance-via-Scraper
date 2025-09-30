@@ -197,49 +197,60 @@ def scrape_and_update_people(log_id, number=10):
         scraped_info = scrape_profiles(driver, profile_map, cookies_file)
 
         for name, info in scraped_info.items():
-            fn, *ln = name.strip().split()
-            first_name, last_name = fn, " ".join(ln)
-            person = db.session.query(People).filter(
-                sa.func.lower(People.first_name) == first_name.lower(),
-                sa.func.lower(People.last_name) == last_name.lower()
-            ).first()
-            if person:
-                location = info.get("location", "")
-                parts = [p.strip() for p in location.split(",")]
-                
-                city = parts[0] if len(parts) > 0 else ""
-                state = parts[1] if len(parts) > 1 else ""
-                country = parts[2] if len(parts) > 2 else ""
+            try:
+                fn, *ln = name.strip().split()
+                first_name, last_name = fn, " ".join(ln)
+                person = db.session.query(People).filter(
+                    sa.func.lower(People.first_name) == first_name.lower(),
+                    sa.func.lower(People.last_name) == last_name.lower()
+                ).first()
+                if person:
+                    location = info.get("location", "")
+                    parts = [p.strip() for p in location.split(",")]
+                    
+                    city = parts[0] if len(parts) > 0 else ""
+                    state = parts[1] if len(parts) > 1 else ""
+                    country = parts[2] if len(parts) > 2 else ""
 
-                person.organization = info.get("company", "")
-                person.role = info.get("position", "")
-                person.city = city
-                person.state = state
-                person.country = country
-                person.email = info.get("email", "")
-                n += 1
-                log_detail = LogDetail(
-                    log_id=log_id,
-                    record_name=name,
-                    status="success",
-                    source=info.get("url", ""),
-                    detail=json.dumps(info)
-                )
-                db.session.add(log_detail)
-                db.session.commit()
-            else:
+                    person.organization = info.get("company", "")
+                    person.role = info.get("position", "")
+                    person.city = city
+                    person.state = state
+                    person.country = country
+                    person.email = info.get("email", "")
+                    n += 1
+                    log_detail = LogDetail(
+                        log_id=log_id,
+                        record_name=name,
+                        status="success",
+                        source=info.get("url", ""),
+                        detail=json.dumps(info)
+                    )
+                    db.session.add(log_detail)
+                    db.session.commit()
+                else:
+                    log_detail = LogDetail(
+                        log_id=log_id,
+                        record_name=name,
+                        status="error",
+                        source=info.get("url", ""),
+                        detail="Person not found in database"
+                    )
+                    db.session.add(log_detail)
+                    db.session.commit()
+            except Exception as e:
                 log_detail = LogDetail(
                     log_id=log_id,
                     record_name=name,
                     status="error",
                     source=info.get("url", ""),
-                    detail="Person not found in database"
+                    detail=str(e)
                 )
                 db.session.add(log_detail)
                 db.session.commit()
+                print(f"Error updating record for {name}: {e}")
     except Exception as e:
         print(f"Error during scraping and updating: {e}")
-        db.session.rollback()
         log.status = "error"
         log.result = str(e)
         db.session.commit()

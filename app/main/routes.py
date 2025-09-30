@@ -6,7 +6,7 @@ import sqlalchemy as sa
 from app import db
 from app.main.forms import UploadForm
 from flask_login import login_required
-
+from app.models import Log, LogDetail
 
 bad_lines = []
 def handle_bad_line(line):
@@ -29,5 +29,19 @@ def update():
 @bp.route("/logs")
 @login_required
 def logs():
-    return render_template("logs.html", nav="logs", )
+    logs = Log.query.order_by(Log.created_at.desc()).all()
+    return render_template("logs.html", logs=logs, nav="logs")
 
+@bp.route("/logs/<int:log_id>/details")
+def log_details(log_id):
+    details = LogDetail.query.filter_by(log_id=log_id).all()
+    data = [
+        {
+            "record_name": d.record_name,
+            "status": d.status,
+            "source": d.source,
+            "detail": d.detail
+        }
+        for d in details
+    ]
+    return jsonify(data)

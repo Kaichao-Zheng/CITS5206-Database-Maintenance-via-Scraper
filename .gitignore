@@ -17,6 +17,7 @@ venv/
 # for testing purposes
 test-*.py
 *.xlsx
+updated.csv
 
 #db
 *.db
