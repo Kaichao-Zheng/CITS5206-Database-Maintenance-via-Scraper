@@ -1,6 +1,6 @@
 {% extends 'layout.html' %}{% block main_content %}
-<div id="hot" class="w-full h-full"></div>
-<div class="fixed bottom-4 right-4 flex gap-4">
+<div id="hot" class="w-full h-full z-1"></div>
+<div class="fixed bottom-16 right-16 flex gap-4 z-2">
   <button
     id="updateBtn"
     class="button cursor-pointer w-24 bg-violet-700 text-white rounded-md py-2 hover:bg-violet-800 transition-colors duration-300"
@@ -10,9 +10,9 @@
 
   <div
     id="updateModal"
-    class="hidden fixed inset-0 bg-opacity-50 flex items-center justify-center z-2000"
+    class="hidden fixed inset-0 flex items-center justify-center z-99"
   >
-    <div class="bg-white rounded-lg shadow-lg w-96 p-6">
+    <div class="bg-white rounded-lg border-violet-700 border-2 w-96 p-6">
       <h2 class="text-lg font-semibold mb-4">Update Data</h2>
 
       <label for="dataSource" class="block text-sm font-medium mb-2"
@@ -26,7 +26,10 @@
         <option value="gw">Government Website</option>
       </select>
       <div id="linkedinWarning" class="hidden mb-3 text-sm text-red-600">
-        <p>Enter Number of Profiles to Scrape</p>
+        <p>
+          Enter Number of Profiles to Scrape. Please make sure you have less
+          than 30 rows in case your IP gets banned by LinkedIn.
+        </p>
         <input
           type="number"
           id="numberLimitInput"
@@ -148,6 +151,9 @@
           linkedinWarning.classList.remove("hidden");
         }
 
+        const numberInput = document.getElementById("numberLimitInput");
+        let valueStr = numberInput.value;
+
         confirmUpdate.addEventListener("click", () => {
           const updatedData = hot.getSourceData();
           const selectedSource = document.getElementById("dataSource").value;
@@ -165,6 +171,7 @@
             body: JSON.stringify({
               source: selectedSource,
               data: updatedData,
+              limit: selectedSource === "linkedin" ? valueStr || 10 : null,
             }),
           })
             .then(async (res) => {

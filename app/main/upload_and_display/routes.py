@@ -97,7 +97,8 @@ def upload():
         return redirect(url_for("upload_and_display.excel_display")) 
 
     except Exception as e:
-        db.session.rollback()
+        db.session.query(People).delete()
+        db.session.commit()
         flash(f"Upload failed: {str(e)}", "error")
         return redirect(url_for("main.workspace"))
     
@@ -159,7 +160,6 @@ def process_update_task(app, user_email, source, log_id,limit=20):
 
             print("Update successful")
         except Exception as e:
-            db.session.rollback()
             print("Update failed:", str(e))
             return jsonify({"error": str(e)}), 500
         
