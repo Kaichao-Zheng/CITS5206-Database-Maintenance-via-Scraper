@@ -14,7 +14,7 @@
 | 24070858 | Jiazheng Guo         | [Jiazheng GUO](https://github.com/GJZ99123)       |
 | 23931717 | Mudit Mamgain        | [Mudit Mamgain](https://github.com/mudit2322)     |
 | 22496593 | Jordan Daniel Rigden | [jordanrigden](https://github.com/jordanrigden)   |
-| 24071068 | Xiaoyun Kong         | [Erica](https://github.com/ErikaKK)               |
+| 24071068 | Erica Kong           | [ErikaKK](https://github.com/ErikaKK)             |
 | 24372276 | Zihan Wu             | [warrenwu123](https://github.com/warrenwu123)     |
 | 24141207 | Kaichao Zheng        | [Kai Zheng](https://github.com/Kaichao-Zheng)     |
 | 24056458 | Xin Li               | [lilyjelleycat](https://github.com/lilyjelleycat) |
@@ -47,7 +47,7 @@
    ```bash
    # create environment
    conda create -n yourEnvName python=3.9.18
-   
+
    # activate environment
    conda activate yourEnvName
    ```
@@ -62,7 +62,7 @@
 
   ```bash
   pip install <package-name>
-  
+
   # commit in requirements.txt
   pip freeze > requirements.txt
   ```
@@ -91,6 +91,7 @@ FLASK_ENV=
 # CSRF protection; leave blank for default dev key
 SECRET_KEY=
 ```
+
 [How to sign in LinkedIn using a cookie?](how-to-sign-in-linkedin-using-a-cookie.md)
 
 ### Create database and configure schema
