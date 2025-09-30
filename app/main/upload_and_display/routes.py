@@ -135,10 +135,10 @@ def export_data():
     people = db.session.query(People).all()
     df = pd.DataFrame([p.as_dict() for p in people])
     output = BytesIO()
-    df.to_excel(output, index=False)
+    df.to_csv(output, index=False)
     output.seek(0)
     return send_file(output,
-                     download_name="people.xlsx",
+                     download_name="people.csv",
                      as_attachment=True)
 
 # limit is only for linkedin source
