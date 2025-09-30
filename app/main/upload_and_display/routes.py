@@ -120,6 +120,10 @@ def update():
     data = payload.get("data")
     limit = int(payload.get("limit")) if payload.get("limit") else 20
     print("limit:", limit)
+
+    if source == "gw" and get_last_update() is None:
+        return jsonify({"status": "error", "error": "Local government database is empty. Please update it first."}), 400
+
     log = Log(status="in_progress")
     db.session.add(log)
     db.session.commit()
@@ -155,8 +159,47 @@ def check_local_db(log_id):
         log.status = "error"
         db.session.commit()
         return {"error": "No People records found"}
+    
+    n = 0
     for person in people_records:
         new_person = search_database(person.first_name, person.last_name) # Searches each record against local government database
+        if new_person:
+            print(new_person[0]['FirstName'])
+            person = db.session.query(People).filter(
+                sa.func.lower(People.first_name) == new_person[0]['FirstName'].lower(),
+                sa.func.lower(People.last_name) == new_person[0]['LastName'].lower()
+            ).first()
+            if person:
+                person.salutation = new_person[0]['Salutation']
+                person.organization = f'{new_person[0]['Organisation']} - {new_person[0]['Department']}'
+                person.role = new_person[0]['Position']
+                person.city = new_person[0]['City']
+                person.state = new_person[0]['State']
+                person.country = new_person[0]['Country']
+                person.email = new_person[0]['Email']
+                person.business_phone = new_person[0]['Phone']
+
+                n += 1
+                log_detail = LogDetail(
+                    log_id=log_id,
+                    record_name=f'record_{n}', ### CHANGE THIS
+                    status="success",
+                    source=new_person[0]['Source'],
+                    detail=f'record_{n}' ### CHANGE THIS
+                )
+                db.session.add(log_detail)
+                db.session.commit()
+                db.session.commit()
+        else:
+            log_detail = LogDetail(
+                log_id=log_id,
+                record_name=f'record_{n}',
+                status="error",
+                source="N/A",
+                detail="Person not found in database"
+            )
+            db.session.add(log_detail)
+            db.session.commit()
 
 # limit is only for linkedin source
 def process_update_task(app, user_email, source, log_id, limit=20):
@@ -169,8 +212,11 @@ def process_update_task(app, user_email, source, log_id, limit=20):
             if source == "linkedin":
                 scrape_and_update_people(log_id, limit)
             elif source == "gw":
+                last_update = get_last_update()
+                if last_update is None:
+                    flash("Local government database is empty. Please update it first.", "error")
+                    return
                 check_local_db(log_id)
-                pass
             else:
                 return jsonify({"status": "error", "error": "Invalid source"}), 400
 
@@ -211,7 +257,10 @@ def process_update_task(app, user_email, source, log_id, limit=20):
 @ud.route("/updating/<int:log_id>")
 @login_required
 def updating(log_id):
-    return render_template("updating.html", log_id=log_id, nav="workspace")
+
+    last_update = get_last_update()
+
+    return render_template("updating.html", log_id=log_id, nav="workspace", last_update=last_update)
 
 
 @ud.route("/update_progress/<int:log_id>")
@@ -238,4 +287,7 @@ def update_progress(log_id):
 @ud.route("/update_complete")
 @login_required
 def update_complete():
-    return render_template("update-complete.html", nav="workspace")
+
+    last_update = get_last_update()
+
+    return render_template("update-complete.html", nav="workspace", last_update=last_update)

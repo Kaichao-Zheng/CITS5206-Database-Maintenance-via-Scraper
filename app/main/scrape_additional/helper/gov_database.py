@@ -22,6 +22,7 @@ def connect_db():
             City TEXT,
             State TEXT,
             Country TEXT,
+            Source TEXT,
             UNIQUE(Name, Position)  -- <-- composite unique constraint
         );
     """) # The UNIQUE constraint prevents duplicate entries based on Name and Position
@@ -41,11 +42,11 @@ def commit_batch(conn, cursor, batch):
     cursor.executemany("""
     INSERT INTO people (
         Salutation, FirstName, LastName, Name, Organisation, Department,
-        Position, Gender, Phone, Email, City, State, Country
+        Position, Gender, Phone, Email, City, State, Country, Source
     )
     VALUES (
         :Salutation, :FirstName, :LastName, :Name, :Organisation, :Department,
-        :Position, :Gender, :Phone, :Email, :City, :State, :Country
+        :Position, :Gender, :Phone, :Email, :City, :State, :Country, 'https://www.directory.gov.au'
     )
     ON CONFLICT(Name, Position) DO UPDATE SET
         Salutation = excluded.Salutation,
@@ -58,7 +59,8 @@ def commit_batch(conn, cursor, batch):
         Email = excluded.Email,
         City = excluded.City,
         State = excluded.State,
-        Country = excluded.Country
+        Country = excluded.Country,
+        Source = excluded.Source
     """, batch)
 
     update_last_update(cursor)
@@ -89,7 +91,10 @@ def search_database(fname, lname):
         SELECT * FROM people WHERE FirstName = ? AND LastName = ?
     """, (fname, lname))
 
-    results = cursor.fetchall()
+    rows = cursor.fetchall()
+    col_names = [description[0] for description in cursor.description]
+
+    results = [dict(zip(col_names, row)) for row in rows]
 
     if results:
         print(f"Found {len(results)} record(s) for {fname} {lname}.")
