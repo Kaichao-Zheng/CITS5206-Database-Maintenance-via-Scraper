@@ -1,3 +1,9 @@
+import sys
+import os
+
+# Add app/ to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
+
 import time
 import json
 import os
@@ -10,7 +16,7 @@ import random
 import undetected_chromedriver as uc
 import re
 from urllib.parse import urlparse, urlunparse
-
+from linkedin_scraper import actions
 
 
 def save_cookies(driver, filename="linkedin_cookies.json"):
@@ -48,9 +54,16 @@ def load_cookies(driver, filename="linkedin_cookies.json"):
         print(f"Cookie file {filename} not found. Need to login first.")
         return False
 
+def init_driver(headless=False):
+    """Safe Chrome init"""
+    options = uc.ChromeOptions()
+    if headless:
+        options.add_argument("--headless=new")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    driver = uc.Chrome(options=options)
+    return driver
 
-
-def scrape_linkedin_people_search(names, email, password, cookies_file="linkedin_cookies.json"):
+def scrape_linkedin_people_search(names, cookies_file="linkedin_cookies.json"):
     """
     Enhanced LinkedIn scraper with cookie handling:
     - Saves cookies after first login and reuses them for subsequent sessions
@@ -59,110 +72,82 @@ def scrape_linkedin_people_search(names, email, password, cookies_file="linkedin
     - Saves separate HTML files for each name's search outcome
     - Uses proxy rotation every 3 names
     """
-    batch_size = 20  # Change proxy every 20 names
-    first_batch = True  # Track if this is the first batch (needs login)
-    results = {} # Store results for each name
-    
-    # Check if cookies exist and load them
-    if os.path.exists(cookies_file) and not first_batch:
-        print("Found existing cookies file. Will try to use saved session.")
-    
+    batch_size = 20
+    first_batch = True
+    results = {}
+
+    email = os.getenv("LINKEDIN_EMAIL")
+    password = os.getenv("LINKEDIN_PASSWORD")
+
     for i in range(0, len(names), batch_size):
         batch_names = names[i:i + batch_size]
-        
-        driver = uc.Chrome(headless=True)
+
+        driver = init_driver(headless=False)
         try:
-            # For the first batch, check if we need to login
-            if first_batch:
-                # Load existing cookies if available
-                if load_cookies(driver, cookies_file):
-                    print("Cookies loaded, checking session validity...")
-                else:
-                    print("No cookies found. Performing login...")
-                    from linkedin_scraper import actions
-                    actions.login(driver, email, password)
-                    print("Login submitted, waiting for confirmation...")
-                    save_cookies(driver, cookies_file)
-                    print("Login successful! Cookies saved for future use.")
-                
-        
-                first_batch = False  # Set to False after first batch
-            
-            
-            # Scrape each name in the batch
+            driver.get("https://www.linkedin.com/")
+
+            # Load cookies if available
+            if load_cookies(driver, cookies_file):
+                driver.refresh()
+                print("🔑 Cookies loaded.")
+            else:
+                print("No cookies found, logging in...")
+                actions.login(driver, email, password)
+                save_cookies(driver, cookies_file)
+                print("✅ Logged in and cookies saved.")
+
+            first_batch = False
+
             for j, name in enumerate(batch_names):
-                print(f"  Scraping {j+1}/{len(batch_names)}: {name}")
-                
+                print(f"\n👤 Scraping {j+1}/{len(batch_names)}: {name}")
+                encoded_name = name.replace(" ", "%20")
+                search_url = f"https://www.linkedin.com/search/results/people/?keywords={encoded_name}"
+
                 try:
-                    # URL-encode the name (replace spaces with %20)
-                    encoded_name = name.replace(' ', '%20')
-                    url = f"https://www.linkedin.com/search/results/people/?keywords={encoded_name}"
-                    
-                    # Navigate to the search page
-                    print(f"    Navigating to: {url}")
-                    driver.get(url)
-                    
-                    # Wait for page to load and search results to appear
-                    WebDriverWait(driver, 10).until(
+                    driver.get(search_url)
+                    time.sleep(random.uniform(5, 10))
+
+                    WebDriverWait(driver, 1).until(
                         EC.presence_of_element_located((By.TAG_NAME, "body"))
                     )
-                    time.sleep(random.uniform(2, 4))  # Random wait to mimic human behavior
-                    
-                    # Check if we got redirected to login (session expired)
-                    if "login" in driver.current_url.lower():
-                        print(f"    Session expired for {name}. Re-logging in...")
-                        from linkedin_scraper import actions
+
+                    # Check if redirected to login/authwall
+                    if "login" in driver.current_url.lower() or "authwall" in driver.current_url.lower():
+                        print("⚠️ Redirected to login/authwall, re-logging in...")
                         actions.login(driver, email, password)
                         save_cookies(driver, cookies_file)
-                        # Retry the URL
-                        driver.get(url)
-                        time.sleep(3)
-                    
-                
-                    # get all <a> 
+                        driver.get(search_url)
+                        time.sleep(5)
+
+                    # Extract first LinkedIn profile link
                     links = driver.find_elements(By.TAG_NAME, "a")
-
-                    
-                    found = False  
-
+                    found = False
                     for link in links:
-                        href = link.get_attribute("href")  
-                        if href and "linkedin.com/in/" in href:  
-                            
-                            parsed_url = urlparse(href)
-                            clean_url = urlunparse(parsed_url._replace(query=''))  # 替换查询部分为空字符串
-                            
-                            print("found url:", clean_url)  
+                        href = link.get_attribute("href")
+                        if href and "linkedin.com/in/" in href:
+                            clean_url = urlunparse(urlparse(href)._replace(query=''))
+                            print(f"✅ Found URL for {name}: {clean_url}")
                             results[name] = clean_url
-                            found = True  
+                            found = True
                             break
-
                     if not found:
-                        print("could not find any linkedin profile link on the search results page.")
-                    
-                    # Random delay between searches to avoid detection
-                    if j < len(batch_names) - 1:  # Don't wait after last name in batch
-                        wait_time = random.uniform(1, 3)
-                        print(f"    Waiting {wait_time:.1f}s before next search...")
-                        time.sleep(wait_time)
-                
+                        print(f"⚠️ No LinkedIn profile link found for {name}")
+
+                    # Random delay between searches
+                    if j < len(batch_names) - 1:
+                        time.sleep(random.uniform(1, 3))
+
                 except Exception as scrape_error:
-                    print(f"    ✗ Error scraping {name}: {scrape_error}")
-                    
-        
+                    print(f"❌ Error scraping {name}: {scrape_error}")
+
         except Exception as batch_error:
-            print(f"Batch error: {batch_error}")
-        
+            print(f"❌ Batch error: {batch_error}")
+
         finally:
-            # Clean up driver after batch
             print("Closing browser...")
             driver.quit()
-            
-            # Delay between batches
             if i + batch_size < len(names):
-                batch_delay = random.uniform(3, 7)
-                print(f"Waiting {batch_delay:.1f}s before next batch...")
-                time.sleep(batch_delay)
-    
-    print("Scraping completed!")
+                time.sleep(random.uniform(3, 7))
+            print("Batch completed.\n")
+
     return results

@@ -11,6 +11,7 @@ class User(UserMixin,db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     username: so.Mapped[str] = so.mapped_column(sa.String(64), index=True,
                                                 unique=True,nullable=False)
+    email: so.Mapped[Optional[str]] = so.mapped_column(sa.String(120), index=True, unique=True)
     password_hash: so.Mapped[str] = so.mapped_column(sa.String(256))
 
     def __repr__(self):
@@ -55,18 +56,35 @@ class People(db.Model):
         }
     
 class Log(db.Model):
+    '''
+    result: summary of final outcome e.g. Successfully updated 1000 records. Failed 12 records.
+    status: status of this record processing (e.g., "completed", "error", or "in_progress").
+    created_at: when the task started.
+    '''
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    create_at: so.Mapped[Optional[datetime]] = so.mapped_column(sa.DateTime, default=datetime.utcnow)
+    status: so.Mapped[Optional[str]] = so.mapped_column(sa.String(32))
+    result: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128))
+    created_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
         return '<Log {}>'.format(self.id)
     
 class LogDetail(db.Model):
+    '''
+    log_id: foreign key to Log.id
+    record_name: name of the record being processed (e.g., "John Doe")
+    status: status of this record processing (e.g., "success", "error").
+    source: source URL (if scraping).
+    detail: Extra info (e.g. raw scraped fields, exception trace).
+    created_at: when the task started.
+    '''
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    log_id: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer, sa.ForeignKey("log.id"))
+    log_id: so.Mapped[int] = so.mapped_column(sa.Integer, sa.ForeignKey("log.id"))
     record_name: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    error: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256))
+    status: so.Mapped[Optional[str]] = so.mapped_column(sa.String(32))
     source: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128)) # source url
+    detail: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256))
+    created_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
         return '<LogDetail {}>'.format(self.id)
@@ -80,66 +98,3 @@ class IP(db.Model):
     type: so.Mapped[Optional[str]] = so.mapped_column(sa.String(32), nullable=True)
     source: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128), nullable=True)
     is_expired: so.Mapped[Optional[bool]] = so.mapped_column(sa.Boolean, default=False, nullable=False)
-
-class Profile(db.Model):
-    __tablename__ = "profile"
-
-    id: so.Mapped[int] = so.mapped_column(sa.Integer, primary_key=True)
-    first_name: so.Mapped[Optional[str]] = so.mapped_column(sa.String(50), nullable=False)
-    last_name: so.Mapped[Optional[str]] = so.mapped_column(sa.String(50), nullable=False)
-    url: so.Mapped[Optional[str]] = so.mapped_column(sa.String(255), nullable=False, unique=True)
-
-    def __repr__(self):
-        return f"<Profile(first_name={self.first_name}, last_name={self.last_name}, url={self.url})>"
-
-class ScrapeOutcome_1(db.Model):
-    id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    salutation: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    first_name: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64), index=True)
-    last_name: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64), index=True)
-    organization: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128), index=True)
-    role: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128))
-    gender: so.Mapped[Optional[str]] = so.mapped_column(sa.String(16))
-    city: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    state: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    country: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    business_phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    mobile_phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    email: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128))
-    sector: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    linkedin: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128))
-
-
-class ScrapeOutcome_2(db.Model):
-    id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    salutation: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    first_name: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64), index=True)
-    last_name: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64), index=True)
-    organization: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128), index=True)
-    role: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128))
-    gender: so.Mapped[Optional[str]] = so.mapped_column(sa.String(16))
-    city: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    state: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    country: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    business_phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    mobile_phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    email: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128))
-    sector: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    linkedin: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128))
-
-class ScrapeOutcome_3(db.Model):
-    id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    salutation: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    first_name: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64), index=True)
-    last_name: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64), index=True)
-    organization: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128), index=True)
-    role: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128))
-    gender: so.Mapped[Optional[str]] = so.mapped_column(sa.String(16))
-    city: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    state: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    country: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    business_phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    mobile_phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    email: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128))
-    sector: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    linkedin: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128))

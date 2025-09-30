@@ -9,6 +9,7 @@ body {
   background-color: #6200ee;
   border-radius: 10px;
   color: #ffffff;
+  cursor: pointer;
 }
 
 input:focus {
@@ -32,7 +33,7 @@ input:focus {
   padding: 0.5rem 1rem;
 }
 .danger {
-  color: #af3f00;
+  color: #bc5c25ff;
   background-color: #fff2e5;
   border: 1px solid #fff2e5;
   border-radius: 5px;

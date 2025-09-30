@@ -1,5 +1,4 @@
-{% extends 'base.html' %} 
-{% block content %}
+{% extends 'base.html' %} {% block content %}
 <div class="flex flex-col justify-center items-center">
   <form
     action=""
@@ -15,9 +14,7 @@
     </div>
     {% for error in form.password.errors %}
     <span class="text-red-500">[{{ error }}]</span>
-    {% endfor %}
-
-    <div class="button">{{ form.submit() }}</div>
+    {% endfor %} {{ form.submit(class_="button") }}
   </form>
 </div>
 {% endblock %}
