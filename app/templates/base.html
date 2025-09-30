@@ -36,9 +36,7 @@
     <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
     <title>Database Maintenance</title>
   </head>
-  <body
-    class="min-h-screen md:h-screen p-4 md:p-10 flex flex-col overflow-auto"
-  >
+  <body class="h-screen p-4 md:p-10 flex flex-col overflow-auto">
     {% with messages = get_flashed_messages(with_categories=true) %} {% if
     messages %}
     <ul
@@ -92,7 +90,7 @@
       {% endfor %}
     </ul>
     {% endif %} {% endwith %}
-    <div class="flex flex-col h-full md:justify-center items-center">
+    <div class="flex flex-col max-h-full md:justify-center items-center grow">
       {% block content %}{% endblock %}
     </div>
     <script>

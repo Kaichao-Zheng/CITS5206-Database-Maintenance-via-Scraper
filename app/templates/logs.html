@@ -1,6 +1,6 @@
 {% extends 'layout.html' %} {% block main_content %}
 <div
-  class="w-full flex justify-center items-start h-full overflow-auto bg-white"
+  class="flex justify-center items-start h-full overflow-x-auto overflow-y-auto bg-white"
 >
   <table class="text-left w-full border-collapse">
     <thead>
@@ -15,7 +15,9 @@
         class="hover:bg-gray-100 cursor-pointer border-b border-gray-400"
         onclick="toggleLogDetail(this, {{ log.id }})"
       >
-        <td class="py-3 px-4">{{ log.created_at }}</td>
+        <td class="py-3 px-4">
+          {{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+        </td>
         <td class="py-3 px-4">{{ log.result }}</td>
       </tr>
       <tr class="log-detail hidden bg-gray-100">
