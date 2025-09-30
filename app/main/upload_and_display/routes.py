@@ -171,7 +171,7 @@ def check_local_db(log_id):
             ).first()
             if person:
                 person.salutation = new_person[0]['Salutation']
-                person.organization = f'{new_person[0]['Organisation']} - {new_person[0]['Department']}'
+                person.organization = f'{new_person[0]["Organisation"]} - {new_person[0]["Department"]}'
                 person.role = new_person[0]['Position']
                 person.city = new_person[0]['City']
                 person.state = new_person[0]['State']
