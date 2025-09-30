@@ -4,10 +4,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
-from .objects import Experience, Education, Scraper, Interest, Accomplishment, Contact
+from .objects import Experience, Education, Scraper, Interest, Accomplishment
 import os
-from linkedin_scraper import selectors
-
 
 class Person(Scraper):
 
@@ -321,16 +319,21 @@ class Person(Scraper):
         self.name = top_panel.find_element(By.TAG_NAME, "h1").text
         self.location = top_panel.find_element(By.XPATH, "//*[@class='text-body-small inline t-black--light break-words']").text
 
-    # TODO: Implement get_email method
     def get_email(self):
+        url = os.path.join(self.linkedin_url, "overlay/contact-info")
+        self.driver.get(url)
+        self.focus()
+        contact_section = self.wait_for_element_to_load(by=By.CLASS_NAME, name="artdeco-modal__content")
+        self.scroll_to_half()
+        self.scroll_to_bottom()
+        print("html:", contact_section.get_attribute("outerHTML"))
         try:
-            self.driver.get(self.linkedin_url + "/overlay/contact-info/")
-            self.wait(2)
-            contact_section = self.driver.find_element(By.CLASS_NAME, "pv-contact-info")
-            email_elem = contact_section.find_element(By.CSS_SELECTOR, "a[href^='mailto:']")
-            mailto_link = email_elem.get_attribute("href")   # e.g., "mailto:someone@example.com"
-            email = mailto_link.replace("mailto:", "").strip()
-        except NoSuchElementException:
+            email_elem = WebDriverWait(contact_section, 10).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "a[href^='mailto:']"))
+            )
+            mailto_link = email_elem.get_attribute("href")
+            email = mailto_link.replace("mailto:", "").strip() 
+        except (NoSuchElementException, IndexError) as e:
             email = None
         self.email = email
 
@@ -362,70 +365,70 @@ class Person(Scraper):
         self.open_to_work = self.is_open_to_work()
 
         # get about
-        self.get_about()
-        driver.execute_script(
-            "window.scrollTo(0, Math.ceil(document.body.scrollHeight/2));"
-        )
-        driver.execute_script(
-            "window.scrollTo(0, Math.ceil(document.body.scrollHeight/1.5));"
-        )
+        # self.get_about()
+        # driver.execute_script(
+        #     "window.scrollTo(0, Math.ceil(document.body.scrollHeight/2));"
+        # )
+        # driver.execute_script(
+        #     "window.scrollTo(0, Math.ceil(document.body.scrollHeight/1.5));"
+        # )
 
         # get experience
         self.get_experiences()
 
-        # get education
-        self.get_educations()
+        # # get education
+        # self.get_educations()
 
-        driver.get(self.linkedin_url)
+        # driver.get(self.linkedin_url)
 
-        # get interest
-        try:
+        # # get interest
+        # try:
 
-            _ = WebDriverWait(driver, self.__WAIT_FOR_ELEMENT_TIMEOUT).until(
-                EC.presence_of_element_located(
-                    (
-                        By.XPATH,
-                        "//*[@class='pv-profile-section pv-interests-section artdeco-container-card artdeco-card ember-view']",
-                    )
-                )
-            )
-            interestContainer = driver.find_element(By.XPATH,
-                "//*[@class='pv-profile-section pv-interests-section artdeco-container-card artdeco-card ember-view']"
-            )
-            for interestElement in interestContainer.find_elements(By.XPATH,
-                "//*[@class='pv-interest-entity pv-profile-section__card-item ember-view']"
-            ):
-                interest = Interest(
-                    interestElement.find_element(By.TAG_NAME, "h3").text.strip()
-                )
-                self.add_interest(interest)
-        except:
-            pass
+        #     _ = WebDriverWait(driver, self.__WAIT_FOR_ELEMENT_TIMEOUT).until(
+        #         EC.presence_of_element_located(
+        #             (
+        #                 By.XPATH,
+        #                 "//*[@class='pv-profile-section pv-interests-section artdeco-container-card artdeco-card ember-view']",
+        #             )
+        #         )
+        #     )
+        #     interestContainer = driver.find_element(By.XPATH,
+        #         "//*[@class='pv-profile-section pv-interests-section artdeco-container-card artdeco-card ember-view']"
+        #     )
+        #     for interestElement in interestContainer.find_elements(By.XPATH,
+        #         "//*[@class='pv-interest-entity pv-profile-section__card-item ember-view']"
+        #     ):
+        #         interest = Interest(
+        #             interestElement.find_element(By.TAG_NAME, "h3").text.strip()
+        #         )
+        #         self.add_interest(interest)
+        # except:
+        #     pass
 
-        # get accomplishment
-        try:
-            _ = WebDriverWait(driver, self.__WAIT_FOR_ELEMENT_TIMEOUT).until(
-                EC.presence_of_element_located(
-                    (
-                        By.XPATH,
-                        "//*[@class='pv-profile-section pv-accomplishments-section artdeco-container-card artdeco-card ember-view']",
-                    )
-                )
-            )
-            acc = driver.find_element(By.XPATH,
-                "//*[@class='pv-profile-section pv-accomplishments-section artdeco-container-card artdeco-card ember-view']"
-            )
-            for block in acc.find_elements(By.XPATH,
-                "//div[@class='pv-accomplishments-block__content break-words']"
-            ):
-                category = block.find_element(By.TAG_NAME, "h3")
-                for title in block.find_element(By.TAG_NAME,
-                    "ul"
-                ).find_elements(By.TAG_NAME, "li"):
-                    accomplishment = Accomplishment(category.text, title.text)
-                    self.add_accomplishment(accomplishment)
-        except:
-            pass
+        # # get accomplishment
+        # try:
+        #     _ = WebDriverWait(driver, self.__WAIT_FOR_ELEMENT_TIMEOUT).until(
+        #         EC.presence_of_element_located(
+        #             (
+        #                 By.XPATH,
+        #                 "//*[@class='pv-profile-section pv-accomplishments-section artdeco-container-card artdeco-card ember-view']",
+        #             )
+        #         )
+        #     )
+        #     acc = driver.find_element(By.XPATH,
+        #         "//*[@class='pv-profile-section pv-accomplishments-section artdeco-container-card artdeco-card ember-view']"
+        #     )
+        #     for block in acc.find_elements(By.XPATH,
+        #         "//div[@class='pv-accomplishments-block__content break-words']"
+        #     ):
+        #         category = block.find_element(By.TAG_NAME, "h3")
+        #         for title in block.find_element(By.TAG_NAME,
+        #             "ul"
+        #         ).find_elements(By.TAG_NAME, "li"):
+        #             accomplishment = Accomplishment(category.text, title.text)
+        #             self.add_accomplishment(accomplishment)
+        # except:
+        #     pass
 
         # # get connections
         # try:
