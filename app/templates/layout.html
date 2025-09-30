@@ -1,22 +1,21 @@
 {% extends 'base.html' %} {% block content %}
 <div class="flex flex-col md:flex-row gap-6 w-full grow">
-  <div>
-    <div
-      class="min-w-2xs bg-white text-black flex flex-row md:flex-col gap-6 p-4 max-h-max flex-wrap"
+  <div
+    class="min-w-2xs bg-white text-black flex flex-row md:flex-col gap-6 p-4 max-h-max flex-wrap"
+  >
+    <div class="text-lg font-bold">Data Updating Tool</div>
+    <a
+      href="{{ url_for('main.workspace') }}"
+      class="{% if nav == 'workspace' %}text-violet-700 {% else %}text-gray-700{% endif %}"
     >
-      <div class="text-lg font-bold">Data Updating Tool</div>
-      <a
-        href="{{ url_for('main.workspace') }}"
-        class="{% if nav == 'workspace' %}text-violet-700 {% else %}text-gray-700{% endif %}"
-      >
-        Workspace
-      </a>
-      <a
-        href="{{ url_for('main.logs') }}"
-        class="{% if nav == 'logs' %}text-violet-700 {% else %}text-gray-700{% endif %}"
-      >
-        Logs
-      </a>
+      Workspace
+    </a>
+    <a
+      href="{{ url_for('main.logs') }}"
+      class="{% if nav == 'logs' %}text-violet-700 {% else %}text-gray-700{% endif %}"
+    >
+      Logs
+    </a>
 
       <a
         href="{{ url_for('auth.settings') }}"
@@ -47,9 +46,9 @@
       {% endif %} {% endif %}
     </div>
   </div>
-  <div class="grow flex flex-col">
+  <div class="grow flex flex-col h-full">
     <div
-      class="bg-slate-100 rounded-xl border-violet-700 border-2 overflow-auto flex p-4 justify-center items-center grow"
+      class="bg-slate-100 rounded-xl border-violet-700 border-2 overflow-auto flex p-4 justify-center items-center grow h-full"
     >
       {% block main_content %} {% endblock %}
     </div>

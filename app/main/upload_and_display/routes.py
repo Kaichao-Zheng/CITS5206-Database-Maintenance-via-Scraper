@@ -45,7 +45,7 @@ def excel_display():
 @login_required
 def upload(): 
     if "file" not in request.files:
-        flash("Please select a file", "danger")
+        flash("Please select a file", "error")
         return redirect(url_for("main.workspace"))
     
     file = request.files.get("file")
@@ -61,13 +61,25 @@ def upload():
     try:
         df = pd.read_csv(text_file, engine="c")
         df.columns = df.columns.str.strip()
-        df = df[[col for col in df.columns if col in field_mapping]].rename(columns=field_mapping)
+        df_cols = set(df.columns)
+        expected_cols = set(field_mapping.keys())
+        extra_cols = df_cols - expected_cols   # columns in df but not in field_mapping
+        missing_cols = expected_cols - df_cols # columns in field_mapping but not in df
+
+        if extra_cols:
+            flash(f"Unexpected columns in CSV: {extra_cols}. Expected columns are: {expected_cols}", "danger")
+
+        if missing_cols:
+            flash(f"Missing columns in CSV: {missing_cols}. Expected columns are: {expected_cols}", "danger")
+
+        df = df[[col for col in df.columns if col in field_mapping]]
+        df = df.rename(columns=field_mapping)
         
         # Validate required fields
         required_fields = ["first_name", "last_name"]
         for field in required_fields:
             if field not in df.columns:
-                flash(f"Missing required column: {field}", "danger")
+                flash(f"Missing required column: {field}", "error")
                 return redirect(url_for("main.workspace"))
             
         # Add missing columns
@@ -90,7 +102,7 @@ def upload():
 
     except Exception as e:
         db.session.rollback()
-        flash(f"Upload failed: {str(e)}", "danger")
+        flash(f"Upload failed: {str(e)}", "error")
         return redirect(url_for("main.workspace"))
     
 @ud.route("/data", methods=["GET"])
@@ -106,6 +118,8 @@ def update():
     payload = request.get_json()
     source = payload.get("source")
     data = payload.get("data")
+    limit = int(payload.get("limit")) if payload.get("limit") else 20
+    print("limit:", limit)
     log = Log(status="in_progress")
     db.session.add(log)
     db.session.commit()
@@ -113,7 +127,7 @@ def update():
         return jsonify({"status": "error", "error": "Missing source or data"}), 400
     user_email = current_user.email
     app = current_app._get_current_object()
-    thread = Thread(target=process_update_task, args=(app,user_email, source, log.id))
+    thread = Thread(target=process_update_task, args=(app,user_email, source, log.id,limit))
     thread.start()
     return jsonify({"status": "success", "log_id": log.id}), 202
 
@@ -130,8 +144,8 @@ def export_data():
                      download_name="people.xlsx",
                      as_attachment=True)
 
-
-def process_update_task(app,user_email, source, log_id):
+# limit is only for linkedin source
+def process_update_task(app, user_email, source, log_id,limit=20):
     # Your processing / database update logic
     # Example: save CSV temporarily
     print(f"Starting update for user: {user_email}")
@@ -139,7 +153,7 @@ def process_update_task(app,user_email, source, log_id):
 
         try:
             if source == "linkedin":
-                scrape_and_update_people(log_id)
+                scrape_and_update_people(log_id,limit)
             elif source == "gw":
                 # #TODO: handle Government Website update
                 # process_gw(data)

@@ -1,3 +1,10 @@
+import sys
+import os
+
+# Add app/ to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
+
+
 import undetected_chromedriver as uc
 import time
 import random
@@ -5,14 +12,13 @@ import json
 import os
 from selenium.webdriver.common.by import By
 from .profile_url_scrape import load_cookies, save_cookies, scrape_linkedin_people_search
-from linkedin_scraper import Person
+from linkedin_scraper import Person, actions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from app import db
 from app.models import People,LogDetail,Log
 from app.main.scrape import sc
 import sqlalchemy as sa
-from linkedin_scraper import actions
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from dotenv import load_dotenv
@@ -36,12 +42,25 @@ def save_cookies(driver, path):
 
 def load_cookies(driver, path):
     if not os.path.exists(path):
+        print(f"Cookies file {path} does not exist.")
         return False
-    with open(path, "r") as f:
-        cookies = json.load(f)
+    try:
+        with open(path, "r") as f:
+            cookies = json.load(f)
+
         for cookie in cookies:
-            driver.add_cookie(cookie)
-    return True
+            if "domain" in cookie:
+                if "www.linkedin.com" in cookie["domain"]:
+                    cookie["domain"] = ".linkedin.com"
+            try:
+                driver.add_cookie(cookie)
+            except Exception as e:
+                print(f"⚠️ Could not add cookie {cookie.get('name')}: {e}")
+        
+        return True
+    except Exception as e:
+        print(f"❌ Failed to load cookies: {e}")
+        return False
 
 def human_delay(min_delay, max_delay):
     delay_time = random.uniform(min_delay, max_delay)
@@ -66,67 +85,76 @@ def ensure_logged_in(driver, cookies_file="my_linkedin_session.json"):
 def scrape_profiles(driver, profile_map, cookies_file="linkedin_cookies.json"):
     results_dict = {}
 
-    # Load cookies if available
     driver.get("https://www.linkedin.com/")
     if load_cookies(driver, cookies_file):
         driver.refresh()
         print("🔑 Cookies loaded.")
     ensure_logged_in(driver, cookies_file)
 
+   
     for name, profile_url in profile_map.items():
-        print(f"\n👤 Scraping {name}: {profile_url}")
-        driver.get(profile_url)
-        # person = Person(profile_url, driver=driver, scrape=False)
-        close_alert_if_present(driver)
-        human_delay(4, 7)
-
-        if "authwall" in driver.current_url or "login" in driver.current_url:
-            print("⚠️ Hit authwall, retrying login...")
-            ensure_logged_in(driver, cookies_file)
-            driver.get(profile_url)
-            human_delay(4, 6)
-
+        print(f"Scraping profile for {name}: {profile_url}")
         try:
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "body"))
-            )
-        except Exception:
-            print(f"❌ Could not load profile page for {name}")
-            continue
-        # TODO: get company. now it seems doesn't work
-        try:
-            company = driver.find_element(By.CSS_SELECTOR, "span.pv-entity__secondary-title").text.strip()
-        except:
-            company = ""
+            person = Person(profile_url, driver=driver, scrape=False)
+            close_alert_if_present(driver)
+            human_delay(4,7)
 
-        try:
-            position_title = driver.find_element(By.CSS_SELECTOR, "h2.mt1").text.strip()
-        except:
-            position_title = ""
-        try:
-            location = driver.find_element(By.CSS_SELECTOR, ".text-body-small.inline.t-black--light.break-words").text.strip()
-        except:
-            location = ""
+            if "authwall" in driver.current_url or "login" in driver.current_url:
+                print("⚠️ Hit authwall, retrying login...")
+                ensure_logged_in(driver, cookies_file)
+                driver.get(profile_url)
+                human_delay(4, 6)
+            try:
+                WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "body"))
+                )
+            except Exception as e:
+                print(f"❌ Failed to load profile page for {name}: {e}")
+                continue
 
-        try:
-            headline = driver.find_element(By.CSS_SELECTOR, ".text-body-medium").text.strip()
-        except:
-            headline = ""
+            # Scrape name and location
+            try:
+                person.get_name_and_location()
+                print(f"Name and location scraped for {name}")
+            except Exception as e:
+                print(f"⚠️ Failed to scrape name/location for {name}: {e}")
+                # Continue with empty values
+                person.name = ""
+                person.location = ""
+            
+            # Scrape experiences
+            try:
+                person.get_experiences()
+                print(f"Experiences scraped for {name}")
+            except Exception as e:
+                print(f"⚠️ Failed to scrape experiences for {name}: {e}")
+                person.company = ""
+                person.job_title = ""
+            
+            # TODO: Scrape email
+            # human_delay(2, 4)
+            # try:
+            #     person.get_email()
+            #     print(f"Email scraped for {name}")
+            # except Exception as e:
+            #     print(f"⚠️ Failed to scrape email for {name}: {e}")
+            #     person.email = ""
 
-        
+            # Store results with fallback empty values
+            results_dict[name] = {
+                "company": person.company or "",
+                "position": person.job_title or "",
+                "location": person.location or "",
+                "email": person.email or "",
+                "url": profile_url
+            }
+            print(f"✅ Scraped {name}: {results_dict[name]}")
+            human_delay(2, 5)
+        except Exception as e:
+            print(f"❌ Error processing profile for {name}: {e}")
+            continue  # Skip to next profile
 
-        results_dict[name] = {
-            "company": company,
-            "position": headline,
-            "location": location,
-            "url": profile_url
-        }
-        print(f"✅ Scraped {name}: {results_dict[name]}")
-        human_delay(2, 5)
-
-    return results_dict # structured as {name: {info_dict}}
-
-
+    return results_dict
 
 def scrape_and_update_people(log_id, number=10):
     people_records = db.session.query(People).limit(number).all()
@@ -157,6 +185,7 @@ def scrape_and_update_people(log_id, number=10):
             if person:
                 person.linkedin = url
 
+    n = 0
     # ✅ Create driver once here
     driver = uc.Chrome(headless=False)
 
@@ -167,7 +196,6 @@ def scrape_and_update_people(log_id, number=10):
         }
         scraped_info = scrape_profiles(driver, profile_map, cookies_file)
 
-        n = 0
         for name, info in scraped_info.items():
             fn, *ln = name.strip().split()
             first_name, last_name = fn, " ".join(ln)
@@ -188,6 +216,7 @@ def scrape_and_update_people(log_id, number=10):
                 person.city = city
                 person.state = state
                 person.country = country
+                person.email = info.get("email", "")
                 n += 1
                 log_detail = LogDetail(
                     log_id=log_id,

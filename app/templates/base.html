@@ -37,7 +37,7 @@
     <title>Database Maintenance</title>
   </head>
   <body
-    class="min-h-screen md:h-screen p-4 md:p-10 flex flex-col md:justify-center items-center"
+    class="min-h-screen md:h-screen p-4 md:p-10 flex flex-col overflow-auto"
   >
     {% with messages = get_flashed_messages(with_categories=true) %} {% if
     messages %}
@@ -91,7 +91,10 @@
       </li>
       {% endfor %}
     </ul>
-    {% endif %} {% endwith %} {% block content %}{% endblock %}
+    {% endif %} {% endwith %}
+    <div class="flex flex-col h-full md:justify-center items-center">
+      {% block content %}{% endblock %}
+    </div>
     <script>
       setTimeout(function () {
         let flash = document.getElementById("flash-messages");
