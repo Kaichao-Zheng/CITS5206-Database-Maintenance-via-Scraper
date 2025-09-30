@@ -16,7 +16,9 @@ from requests.exceptions import RequestException
 def index():
     if current_user.is_authenticated:
         return redirect('/workspace')
+    
     form = LoginForm()
+
     if form.validate_on_submit():
         user = db.session.scalar(
             sa.select(User).where(User.username == form.username.data))
@@ -25,6 +27,7 @@ def index():
             return redirect(url_for('auth.index'))
         login_user(user)
         return redirect('/workspace')
+    
     return render_template(
         "index.html", form=form
     )

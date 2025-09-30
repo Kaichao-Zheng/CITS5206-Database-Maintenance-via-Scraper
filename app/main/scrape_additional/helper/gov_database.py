@@ -66,7 +66,7 @@ def commit_batch(conn, cursor, batch):
     conn.commit()
 
 def update_last_update(cursor):
-    # Get current datetime and format it
+    # Get current datetime and format its
     now = datetime.now().strftime("%d/%m/%Y %H:%M")
     
     cursor.execute("""

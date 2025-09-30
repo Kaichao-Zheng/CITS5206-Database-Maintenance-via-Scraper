@@ -14,6 +14,7 @@ from threading import Thread
 from app.main.scrape.helper.scrape_information import scrape_and_update_people
 import io
 import csv
+from app.main.scrape_additional.helper.gov_database import get_last_update
 
 field_mapping = {
             "FirstName": "first_name",
@@ -35,7 +36,10 @@ field_mapping = {
 @ud.route("/excel_display", methods=["GET"])
 @login_required
 def excel_display():
-    return render_template("/excel_display.html", nav="workspace")
+
+    last_update = get_last_update()
+
+    return render_template("/excel_display.html", nav="workspace", last_update=last_update)
 
 @ud.route("/upload", methods=["POST"])
 @login_required

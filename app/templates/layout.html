@@ -1,48 +1,51 @@
 {% extends 'base.html' %} {% block content %}
 <div class="flex flex-col md:flex-row gap-6 w-full grow">
-  <div
-    class="min-w-2xs bg-white text-black flex flex-row md:flex-col gap-6 p-4 max-h-max flex-wrap"
-  >
-    <div class="text-lg font-bold">Data Updating Tool</div>
-    <a
-      href="{{ url_for('main.workspace') }}"
-      class="{% if nav == 'workspace' %}text-violet-700 {% else %}text-gray-700{% endif %}"
+  <div>
+    <div
+      class="min-w-2xs bg-white text-black flex flex-row md:flex-col gap-6 p-4 max-h-max flex-wrap"
     >
-      Workspace
-    </a>
-    <a
-      href="{{ url_for('main.logs') }}"
-      class="{% if nav == 'logs' %}text-violet-700 {% else %}text-gray-700{% endif %}"
-    >
-      Logs
-    </a>
+      <div class="text-lg font-bold">Data Updating Tool</div>
+      <a
+        href="{{ url_for('main.workspace') }}"
+        class="{% if nav == 'workspace' %}text-violet-700 {% else %}text-gray-700{% endif %}"
+      >
+        Workspace
+      </a>
+      <a
+        href="{{ url_for('main.logs') }}"
+        class="{% if nav == 'logs' %}text-violet-700 {% else %}text-gray-700{% endif %}"
+      >
+        Logs
+      </a>
 
-    <a
-      href="{{ url_for('auth.settings') }}"
-      class="{% if nav == 'settings' %}text-violet-700 {% else %}text-gray-700{% endif %}"
-    >
-      Settings
-    </a>
-    <a
-      href="{{ url_for('auth.logout') }}"
-      class="{% if nav == 'logout' %}text-violet-700 {% else %}text-gray-700{% endif %}"
-    >
-      Log out
-    </a>
+      <a
+        href="{{ url_for('auth.settings') }}"
+        class="{% if nav == 'settings' %}text-violet-700 {% else %}text-gray-700{% endif %}"
+      >
+        Settings
+      </a>
+      <a
+        href="{{ url_for('auth.logout') }}"
+        class="{% if nav == 'logout' %}text-violet-700 {% else %}text-gray-700{% endif %}"
+      >
+        Log out
+      </a>
 
-    <a
-      href="{{ url_for('scrape_additional.update_local_db') }}"
-      class="mt-auto bg-violet-700 text-white px-4 py-2 rounded-lg hover:bg-violet-800 text-center"
-    >
-      Update Database
-    </a>
-    {% if last_update %}
-    <span class="text-xs text-gray-500 mt-1"
-      >Last updated: {{ last_update }}</span
-    >
-    {% else %}
-    <span class="text-xs text-red-500 mt-1">No local database found</span>
-    {% endif %}
+      {% if nav == 'workspace' %}
+      <a
+        href="{{ url_for('scrape_additional.update_local_db') }}"
+        class="mt-auto bg-violet-700 text-white px-4 py-2 rounded-lg hover:bg-violet-800 text-center"
+      >
+        Update Database
+      </a>
+      {% if last_update %}
+      <span class="text-xs text-gray-500 mt-1"
+        >Last updated: {{ last_update }}</span
+      >
+      {% else %}
+      <span class="text-xs text-red-500 mt-1">No local database found</span>
+      {% endif %} {% endif %}
+    </div>
   </div>
   <div class="grow flex flex-col">
     <div

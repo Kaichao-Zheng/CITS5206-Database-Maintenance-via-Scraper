@@ -8,7 +8,6 @@ from app.main.forms import UploadForm
 from flask_login import login_required
 from .scrape_additional.helper.gov_database import get_last_update
 
-
 bad_lines = []
 def handle_bad_line(line):
     # line is a list of strings (the row values), CSV is not uniform.
@@ -27,10 +26,12 @@ def workspace():
 @bp.route("/update") # TODO: pass the log id and log records
 @login_required
 def update():
-    return render_template("update.html", nav="workspace",)
+
+    return render_template("update.html", nav="workspace")
 
 @bp.route("/logs")
 @login_required
 def logs():
-    return render_template("logs.html", nav="logs", )
+
+    return render_template("logs.html", nav="logs")
 
