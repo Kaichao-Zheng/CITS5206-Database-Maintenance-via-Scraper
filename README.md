@@ -46,7 +46,7 @@
 
    ```bash
    # create environment
-   conda create -n yourEnvName python=3.9.18
+   conda create -n yourEnvName python=3.10.18
 
    # activate environment
    conda activate yourEnvName
