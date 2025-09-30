@@ -1,4 +1,4 @@
-from flask import jsonify
+from flask import flash, redirect, url_for, request
 from flask_login import login_required
 from app.main.scrape_additional import sca
 from .helper.gov_scraper import update_gov_database
@@ -8,6 +8,7 @@ from .helper.gov_scraper import update_gov_database
 def update_local_db():
     try:
         update_gov_database()
-        return jsonify({"message": "Database updated successfully"}), 200
+        flash("Database updated successfully", "success")
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        flash(f"Error updating database: {e}", "error")
+    return redirect(request.referrer or url_for("main.workspace"))

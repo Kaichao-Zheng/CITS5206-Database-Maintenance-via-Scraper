@@ -14,7 +14,7 @@ from threading import Thread
 from app.main.scrape.helper.scrape_information import scrape_and_update_people
 import io
 import csv
-from app.main.scrape_additional.helper.gov_database import get_last_update
+from app.main.scrape_additional.helper.gov_database import get_last_update, search_database
 
 field_mapping = {
             "FirstName": "first_name",
@@ -127,8 +127,10 @@ def update():
         return jsonify({"status": "error", "error": "Missing source or data"}), 400
     user_email = current_user.email
     app = current_app._get_current_object()
-    thread = Thread(target=process_update_task, args=(app,user_email, source, log.id,limit))
+
+    thread = Thread(target=process_update_task, args=(app, user_email, source, log.id, limit))
     thread.start()
+
     return jsonify({"status": "success", "log_id": log.id}), 202
 
 
@@ -144,8 +146,20 @@ def export_data():
                      download_name="people.xlsx",
                      as_attachment=True)
 
+def check_local_db(log_id):
+    people_records = db.session.query(People).all() # Fetch all records in CSV
+    # Below manages logging and error handling
+    log = db.session.query(Log).filter_by(id=log_id).first()
+    if not people_records:
+        log.result = "No People records found"
+        log.status = "error"
+        db.session.commit()
+        return {"error": "No People records found"}
+    for person in people_records:
+        new_person = search_database(person.first_name, person.last_name) # Searches each record against local government database
+
 # limit is only for linkedin source
-def process_update_task(app, user_email, source, log_id,limit=20):
+def process_update_task(app, user_email, source, log_id, limit=20):
     # Your processing / database update logic
     # Example: save CSV temporarily
     print(f"Starting update for user: {user_email}")
@@ -153,10 +167,9 @@ def process_update_task(app, user_email, source, log_id,limit=20):
 
         try:
             if source == "linkedin":
-                scrape_and_update_people(log_id,limit)
+                scrape_and_update_people(log_id, limit)
             elif source == "gw":
-                # #TODO: handle Government Website update
-                # process_gw(data)
+                check_local_db(log_id)
                 pass
             else:
                 return jsonify({"status": "error", "error": "Invalid source"}), 400

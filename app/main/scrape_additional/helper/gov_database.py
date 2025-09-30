@@ -81,3 +81,20 @@ def get_last_update():
     result = cursor.fetchone()
     conn.close()
     return result[0] if result else None
+
+def search_database(fname, lname):
+    conn, cursor = connect_db()
+
+    cursor.execute("""
+        SELECT * FROM people WHERE FirstName = ? AND LastName = ?
+    """, (fname, lname))
+
+    results = cursor.fetchall()
+
+    if results:
+        print(f"Found {len(results)} record(s) for {fname} {lname}.")
+    else:
+        print(f"No records found for {fname} {lname}.")
+
+    conn.close()
+    return results

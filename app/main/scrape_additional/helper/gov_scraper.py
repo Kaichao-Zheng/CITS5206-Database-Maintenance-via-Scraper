@@ -192,20 +192,3 @@ def update_gov_database():
     update_last_update(cursor)
     conn.commit()
     conn.close()
-
-def search_database(fname, lname):
-    conn, cursor = connect_db()
-
-    cursor.execute("""
-        SELECT * FROM people WHERE FirstName = ? AND LastName = ?
-    """, (fname, lname))
-
-    results = cursor.fetchall()
-
-    if results:
-        print(f"Found {len(results)} record(s) for {fname} {lname}.")
-    else:
-        print(f"No records found for {fname} {lname}.")
-
-    conn.close()
-    return results
