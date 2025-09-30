@@ -2,7 +2,7 @@ import requests, re, concurrent.futures
 from bs4 import BeautifulSoup
 import pandas as pd
 from .gov_scraper_person import Person
-from .gov_database import connect_db, commit_batch, update_last_update, get_last_update
+from .gov_database import connect_db, commit_batch, update_last_update
 
 
 """

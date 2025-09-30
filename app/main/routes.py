@@ -6,7 +6,6 @@ import sqlalchemy as sa
 from app import db
 from app.main.forms import UploadForm
 from flask_login import login_required
-from .scrape_additional.helper.gov_database import get_last_update
 
 bad_lines = []
 def handle_bad_line(line):
@@ -19,9 +18,7 @@ def handle_bad_line(line):
 def workspace():
     form = UploadForm()
 
-    last_update = get_last_update()
-
-    return render_template("/workspace.html", nav="workspace", form=form, last_update=last_update)
+    return render_template("/workspace.html", nav="workspace", form=form)
 
 @bp.route("/update") # TODO: pass the log id and log records
 @login_required

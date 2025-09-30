@@ -14,7 +14,7 @@ from threading import Thread
 from app.main.scrape.helper.scrape_information import scrape_and_update_people
 import io
 import csv
-from app.main.scrape_additional.helper.gov_database import get_last_update, search_database
+from app.main.scrape_additional.helper.gov_database import search_database
 
 field_mapping = {
             "FirstName": "first_name",
@@ -36,10 +36,7 @@ field_mapping = {
 @ud.route("/excel_display", methods=["GET"])
 @login_required
 def excel_display():
-
-    last_update = get_last_update()
-
-    return render_template("/excel_display.html", nav="workspace", last_update=last_update)
+    return render_template("/excel_display.html", nav="workspace")
 
 @ud.route("/upload", methods=["POST"])
 @login_required
@@ -120,9 +117,6 @@ def update():
     data = payload.get("data")
     limit = int(payload.get("limit")) if payload.get("limit") else 20
     print("limit:", limit)
-
-    if source == "gw" and get_last_update() is None:
-        return jsonify({"status": "error", "error": "Local government database is empty. Please update it first."}), 400
 
     log = Log(status="in_progress")
     db.session.add(log)
@@ -212,10 +206,6 @@ def process_update_task(app, user_email, source, log_id, limit=20):
             if source == "linkedin":
                 scrape_and_update_people(log_id, limit)
             elif source == "gw":
-                last_update = get_last_update()
-                if last_update is None:
-                    flash("Local government database is empty. Please update it first.", "error")
-                    return
                 check_local_db(log_id)
             else:
                 return jsonify({"status": "error", "error": "Invalid source"}), 400
@@ -257,10 +247,7 @@ def process_update_task(app, user_email, source, log_id, limit=20):
 @ud.route("/updating/<int:log_id>")
 @login_required
 def updating(log_id):
-
-    last_update = get_last_update()
-
-    return render_template("updating.html", log_id=log_id, nav="workspace", last_update=last_update)
+    return render_template("updating.html", log_id=log_id, nav="workspace")
 
 
 @ud.route("/update_progress/<int:log_id>")
@@ -287,7 +274,4 @@ def update_progress(log_id):
 @ud.route("/update_complete")
 @login_required
 def update_complete():
-
-    last_update = get_last_update()
-
-    return render_template("update-complete.html", nav="workspace", last_update=last_update)
+    return render_template("update-complete.html", nav="workspace")
