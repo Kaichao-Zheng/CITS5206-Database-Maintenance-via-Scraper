@@ -1,21 +1,22 @@
 {% extends 'base.html' %} {% block content %}
 <div class="flex flex-col md:flex-row gap-6 w-full grow">
-  <div
-    class="min-w-2xs bg-white text-black flex flex-row md:flex-col gap-6 p-4 max-h-max flex-wrap"
-  >
-    <div class="text-lg font-bold">Data Updating Tool</div>
-    <a
-      href="{{ url_for('main.workspace') }}"
-      class="{% if nav == 'workspace' %}text-violet-700 {% else %}text-gray-700{% endif %}"
+  <div>
+    <div
+      class="min-w-2xs bg-white text-black flex flex-row md:flex-col gap-6 p-4 max-h-max flex-wrap"
     >
-      Workspace
-    </a>
-    <a
-      href="{{ url_for('main.logs') }}"
-      class="{% if nav == 'logs' %}text-violet-700 {% else %}text-gray-700{% endif %}"
-    >
-      Logs
-    </a>
+      <div class="text-lg font-bold">Data Updating Tool</div>
+      <a
+        href="{{ url_for('main.workspace') }}"
+        class="{% if nav == 'workspace' %}text-violet-700 {% else %}text-gray-700{% endif %}"
+      >
+        Workspace
+      </a>
+      <a
+        href="{{ url_for('main.logs') }}"
+        class="{% if nav == 'logs' %}text-violet-700 {% else %}text-gray-700{% endif %}"
+      >
+        Logs
+      </a>
 
       <a
         href="{{ url_for('auth.settings') }}"
