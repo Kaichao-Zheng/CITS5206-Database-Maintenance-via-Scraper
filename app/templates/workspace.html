@@ -49,12 +49,18 @@
     </label>
 
     {{ form.submit(class="button cursor-pointer w-24") }}
+    <button type="button" id="cancelButton" 
+    class="button cursor-pointer w-24 bg-gray-300 hover:bg-gray-400 text-black">
+      Cancel
+    </button>
   </form>
 </div>
 <script>
   const fileInput = document.getElementById("fileInput");
   const fileNameSpan = document.getElementById("fileName");
   const form = document.getElementById("uploadForm");
+
+  const cancelButton = document.getElementById("cancelButton");
 
   fileInput.addEventListener("change", () => {
     const file = fileInput.files[0];
@@ -66,5 +72,11 @@
       fileNameSpan.textContent = "Click to Upload (.csv)";
     }
   });
+  cancelButton.addEventListener("click", () => {
+  fileInput.value = "";           // Clear the file input
+  fileNameSpan.textContent = "Click to Upload (.csv)";
+  fileNameSpan.classList.remove("text-violet-700");
+  fileNameSpan.classList.add("text-gray-600");
+});
 </script>
 {% endblock %}
