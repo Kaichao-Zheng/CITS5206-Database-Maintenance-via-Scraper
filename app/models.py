@@ -98,3 +98,17 @@ class IP(db.Model):
     type: so.Mapped[Optional[str]] = so.mapped_column(sa.String(32), nullable=True)
     source: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128), nullable=True)
     is_expired: so.Mapped[Optional[bool]] = so.mapped_column(sa.Boolean, default=False, nullable=False)
+
+class Senetor(db.Model):
+    __tablename__ = "senetor"
+
+    id: so.Mapped[int] = so.mapped_column(sa.Integer, primary_key=True)
+    first_name: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64), nullable=True)
+    last_name: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64), nullable=True)
+    profile_url: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256), nullable=True)
+    party: so.Mapped[Optional[str]] = so.mapped_column(sa.String(32), nullable=True)
+    state: so.Mapped[Optional[str]] = so.mapped_column(sa.String(32), nullable=True)
+    phones: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128), nullable=True)
+    emails: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128), nullable=True)
+    postal_address: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256), nullable=True)
+    source_url: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256), nullable=True)
