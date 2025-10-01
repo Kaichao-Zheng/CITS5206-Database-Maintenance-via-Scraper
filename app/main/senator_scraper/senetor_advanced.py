@@ -141,7 +141,7 @@ def fetch_profile(session, p):
 
     details = parse_profile(pr.text)
 
-    # === 拆名字 ===
+    # Extract first and last names
     parts = p["name"].split()
     first_name = parts[1] if len(parts) > 1 else ""
     last_name = parts[2] if len(parts) > 2 else ""
@@ -188,7 +188,7 @@ def fetch_senators_all(state: Optional[str] = None, max_pages: int = 13,
 
         pairs = parse_search_results(resp.text)
 
-        # === 多线程抓 profile ===
+        # multi-threaded fetch
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = {executor.submit(fetch_profile, session, p): p for p in pairs}
             for future in as_completed(futures):
