@@ -34,7 +34,7 @@
           type="number"
           id="numberLimitInput"
           min="1"
-          placeholder="10"
+          placeholder="20"
           required
           class="w-full border rounded-md px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-violet-500"
         />
@@ -151,10 +151,9 @@
           linkedinWarning.classList.remove("hidden");
         }
 
-        const numberInput = document.getElementById("numberLimitInput");
-        let valueStr = numberInput.value;
-
         confirmUpdate.addEventListener("click", () => {
+          const numberInput = document.getElementById("numberLimitInput");
+          let valueStr = numberInput.value;
           const updatedData = hot.getSourceData();
           const selectedSource = document.getElementById("dataSource").value;
           console.log("Sending updated data to /update:", updatedData);
@@ -171,7 +170,7 @@
             body: JSON.stringify({
               source: selectedSource,
               data: updatedData,
-              limit: selectedSource === "linkedin" ? valueStr || 10 : null,
+              limit: selectedSource === "linkedin" ? valueStr : 20,
             }),
           })
             .then(async (res) => {

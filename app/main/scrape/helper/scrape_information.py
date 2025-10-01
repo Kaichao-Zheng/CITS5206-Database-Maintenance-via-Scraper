@@ -35,33 +35,6 @@ def close_alert_if_present(driver):
     except Exception as e:
         pass  # No alert to close
 
-def save_cookies(driver, path):
-    with open(path, "w") as f:
-        json.dump(driver.get_cookies(), f)
-
-
-def load_cookies(driver, path):
-    if not os.path.exists(path):
-        print(f"Cookies file {path} does not exist.")
-        return False
-    try:
-        with open(path, "r") as f:
-            cookies = json.load(f)
-
-        for cookie in cookies:
-            if "domain" in cookie:
-                if "www.linkedin.com" in cookie["domain"]:
-                    cookie["domain"] = ".linkedin.com"
-            try:
-                driver.add_cookie(cookie)
-            except Exception as e:
-                print(f"⚠️ Could not add cookie {cookie.get('name')}: {e}")
-        
-        return True
-    except Exception as e:
-        print(f"❌ Failed to load cookies: {e}")
-        return False
-
 def human_delay(min_delay, max_delay):
     delay_time = random.uniform(min_delay, max_delay)
     print(f"Waiting for {delay_time:.2f} seconds...")
@@ -82,20 +55,25 @@ def ensure_logged_in(driver, cookies_file="my_linkedin_session.json"):
         print("✅ Already logged in with cookies.")
 
 
-def scrape_profiles(driver, profile_map, cookies_file="linkedin_cookies.json"):
+def scrape_profiles(driver, profile_map, cookies_file="my_linkedin_cookies.json"):
     results_dict = {}
 
     driver.get("https://www.linkedin.com/")
     if load_cookies(driver, cookies_file):
-        driver.refresh()
-        print("🔑 Cookies loaded.")
+                driver.refresh()
+                print("🔑 Cookies loaded.")
+    else:
+        print("No cookies found, logging in...")
+        actions.login(driver, LINKEDIN_EMAIL, LINKEDIN_PASSWORD)
+        save_cookies(driver, cookies_file)
+        print("✅ Logged in and cookies saved.")
     ensure_logged_in(driver, cookies_file)
 
    
     for name, profile_url in profile_map.items():
         print(f"Scraping profile for {name}: {profile_url}")
         try:
-            person = Person(profile_url, driver=driver, scrape=False)
+            person = Person(profile_url, driver=driver, scrape=False, close_on_complete=False)
             close_alert_if_present(driver)
             human_delay(4,7)
 
@@ -112,7 +90,7 @@ def scrape_profiles(driver, profile_map, cookies_file="linkedin_cookies.json"):
                 print(f"❌ Failed to load profile page for {name}: {e}")
                 continue
 
-            # Scrape name and location
+            # # Scrape name and location
             try:
                 person.get_name_and_location()
                 print(f"Name and location scraped for {name}")
@@ -131,14 +109,14 @@ def scrape_profiles(driver, profile_map, cookies_file="linkedin_cookies.json"):
                 person.company = ""
                 person.job_title = ""
             
-            # TODO: Scrape email
-            # human_delay(2, 4)
-            # try:
-            #     person.get_email()
-            #     print(f"Email scraped for {name}")
-            # except Exception as e:
-            #     print(f"⚠️ Failed to scrape email for {name}: {e}")
-            #     person.email = ""
+            # Scrape email
+            human_delay(2, 4)
+            try:
+                person.get_email()
+                print(f"Email scraped for {name}")
+            except Exception as e:
+                print(f"⚠️ Failed to scrape email for {name}: {e}")
+                person.email = ""
 
             # Store results with fallback empty values
             results_dict[name] = {
@@ -171,8 +149,8 @@ def scrape_and_update_people(log_id, number=10):
         if not p.linkedin
     ]
 
+    cookies_file = "my_linkedin_cookies.json"
     if names_to_scrape:
-        cookies_file = "my_linkedin_cookies.json"
         scraped_urls = scrape_linkedin_people_search(names_to_scrape, cookies_file)
         for name, url in scraped_urls.items():
             parts = name.strip().split()
@@ -186,7 +164,6 @@ def scrape_and_update_people(log_id, number=10):
                 person.linkedin = url
 
     n = 0
-    # ✅ Create driver once here
     driver = uc.Chrome(headless=False)
 
     try:
