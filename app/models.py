@@ -64,7 +64,7 @@ class Log(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     status: so.Mapped[Optional[str]] = so.mapped_column(sa.String(32))
     result: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128))
-    created_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, default=datetime.utcnow)
+    created_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, default=datetime.now)
 
     def __repr__(self):
         return '<Log {}>'.format(self.id)
@@ -84,7 +84,7 @@ class LogDetail(db.Model):
     status: so.Mapped[Optional[str]] = so.mapped_column(sa.String(32))
     source: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128)) # source url
     detail: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256))
-    created_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, default=datetime.utcnow)
+    created_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, default=datetime.now)
 
     def __repr__(self):
         return '<LogDetail {}>'.format(self.id)

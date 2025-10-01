@@ -98,7 +98,8 @@ def upload():
         return redirect(url_for("upload_and_display.excel_display")) 
 
     except Exception as e:
-        db.session.rollback()
+        db.session.query(People).delete()
+        db.session.commit()
         flash(f"Upload failed: {str(e)}", "error")
         return redirect(url_for("main.workspace"))
     
@@ -138,10 +139,10 @@ def export_data():
     people = db.session.query(People).all()
     df = pd.DataFrame([p.as_dict() for p in people])
     output = BytesIO()
-    df.to_excel(output, index=False)
+    df.to_csv(output, index=False)
     output.seek(0)
     return send_file(output,
-                     download_name="people.xlsx",
+                     download_name="people.csv",
                      as_attachment=True)
 
 def check_local_db(log_id):
@@ -212,7 +213,6 @@ def process_update_task(app, user_email, source, log_id, limit=20):
 
             print("Update successful")
         except Exception as e:
-            db.session.rollback()
             print("Update failed:", str(e))
             return jsonify({"error": str(e)}), 500
         

@@ -19,14 +19,14 @@ from urllib.parse import urlparse, urlunparse
 from linkedin_scraper import actions
 
 
-def save_cookies(driver, filename="linkedin_cookies.json"):
+def save_cookies(driver, filename="my_linkedin_cookies.json"):
     """Save cookies to file after successful login"""
     cookies = driver.get_cookies()
     with open(filename, 'w') as f:
         json.dump(cookies, f)
     print(f"Cookies saved to {filename}")
 
-def load_cookies(driver, filename="linkedin_cookies.json"):
+def load_cookies(driver, filename="my_linkedin_cookies.json"):
     """Load cookies from file and add to driver"""
     if os.path.exists(filename):
         with open(filename, 'r') as f:
@@ -63,7 +63,7 @@ def init_driver(headless=False):
     driver = uc.Chrome(options=options)
     return driver
 
-def scrape_linkedin_people_search(names, cookies_file="linkedin_cookies.json"):
+def scrape_linkedin_people_search(names, cookies_file="my_linkedin_cookies.json"):
     """
     Enhanced LinkedIn scraper with cookie handling:
     - Saves cookies after first login and reuses them for subsequent sessions
