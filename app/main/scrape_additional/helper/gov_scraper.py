@@ -2,7 +2,7 @@ import requests, re, concurrent.futures
 from bs4 import BeautifulSoup
 import pandas as pd
 from .gov_scraper_person import Person
-from .gov_database import connect_db, commit_batch, update_last_update
+from .gov_database import commit_batch
 
 
 """
@@ -180,15 +180,14 @@ def update_gov_database():
     page = getPage(baseURL + '/commonwealth-entities-and-companies')
     results = parseOrganisations(page, "td", "views-field views-field-title")
 
-    conn, cursor = connect_db()
-
     # Use a thread pool to concurrently scrape
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         # map blocks until all tasks are done
         executor.map(scrape_organisation, results)
 
-    commit_batch(conn, cursor, records)
+    # Commit in batches of 1000 to avoid memory issues
+    batch_size = 1000
+    for i in range(0, len(records), batch_size):
+        batch = records[i:i + batch_size]
+        commit_batch(batch) # Commit each batch to the database
 
-    update_last_update(cursor)
-    conn.commit()
-    conn.close()

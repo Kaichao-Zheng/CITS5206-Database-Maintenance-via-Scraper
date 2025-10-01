@@ -1,105 +1,63 @@
-import sqlite3
-from datetime import datetime
+from app import GovPeople, db
 
-def connect_db():
-    conn = sqlite3.connect("government_profiles.db")  # Creates the database
-    cursor = conn.cursor()
+FIELD_MAP = {
+    "Salutation": "salutation",
+    "FirstName": "first_name",
+    "LastName": "last_name",
+    "Organisation": "organization",
+    "Position": "role",
+    "Gender": "gender",
+    "Phone": "business_phone",
+    "Email": "email",
+    "City": "city",
+    "State": "state",
+    "Country": "country"
+}
 
-    # Create table if it doesn't exist
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS people (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            Salutation TEXT,
-            FirstName TEXT,
-            LastName TEXT,
-            Name TEXT,
-            Organisation TEXT,
-            Department TEXT,
-            Position TEXT,
-            Gender TEXT,
-            Phone TEXT,
-            Email TEXT,
-            City TEXT,
-            State TEXT,
-            Country TEXT,
-            Source TEXT,
-            UNIQUE(Name, Position)  -- <-- composite unique constraint
-        );
-    """) # The UNIQUE constraint prevents duplicate entries based on Name and Position
+def commit_batch(batch):
+    for person_data in batch:
+        # Try to find an existing record based on name + role
+        existing = GovPeople.query.filter_by(
+            first_name = person_data.get("FirstName"),
+            last_name = person_data.get("LastName"),
+            # role = person_data.get("Position") # Optional: Uncomment if role should be part of uniqueness
+        ).first()
 
-    # Create a table to store metadata (like last updated timestamp)
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS metadata (
-        key TEXT PRIMARY KEY,
-        value TEXT
-    )
-    """)
+        if existing:
+            for key, value in person_data.items():
+                field = FIELD_MAP.get(key)
+                if field and hasattr(existing, field):
+                    setattr(existing, field, value)
+        else:
+            # Create new record
+            new_person = GovPeople(
+                salutation=person_data.get("Salutation"),
+                first_name=person_data.get("FirstName"),
+                last_name=person_data.get("LastName"),
+                organization=person_data.get("Organisation"),
+                role=person_data.get("Position"),
+                gender=person_data.get("Gender"),
+                city=person_data.get("City"),
+                state=person_data.get("State"),
+                country=person_data.get("Country"),
+                business_phone=person_data.get("Phone"),
+                mobile_phone=None,
+                email=person_data.get("Email"),
+                sector=None
+            )
+            db.session.add(new_person)
 
-    conn.commit()
-    return conn, cursor
-
-def commit_batch(conn, cursor, batch):
-    cursor.executemany("""
-    INSERT INTO people (
-        Salutation, FirstName, LastName, Name, Organisation, Department,
-        Position, Gender, Phone, Email, City, State, Country, Source
-    )
-    VALUES (
-        :Salutation, :FirstName, :LastName, :Name, :Organisation, :Department,
-        :Position, :Gender, :Phone, :Email, :City, :State, :Country, 'https://www.directory.gov.au'
-    )
-    ON CONFLICT(Name, Position) DO UPDATE SET
-        Salutation = excluded.Salutation,
-        FirstName = excluded.FirstName,
-        LastName = excluded.LastName,
-        Organisation = excluded.Organisation,
-        Department = excluded.Department,
-        Gender = excluded.Gender,
-        Phone = excluded.Phone,
-        Email = excluded.Email,
-        City = excluded.City,
-        State = excluded.State,
-        Country = excluded.Country,
-        Source = excluded.Source
-    """, batch)
-
-    update_last_update(cursor)
-
-    conn.commit()
-
-def update_last_update(cursor):
-    # Get current datetime and format its
-    now = datetime.now().strftime("%d/%m/%Y %H:%M")
-    
-    cursor.execute("""
-        INSERT INTO metadata (key, value) 
-        VALUES ('last_update', ?)
-        ON CONFLICT(key) DO UPDATE SET value=excluded.value
-    """, (now,))
-
-def get_last_update():
-    conn, cursor = connect_db()
-    cursor.execute("SELECT value FROM metadata WHERE key='last_update'")
-    result = cursor.fetchone()
-    conn.close()
-    return result[0] if result else None
+    db.session.commit()
 
 def search_database(fname, lname):
-    conn, cursor = connect_db()
+    person = GovPeople.query.filter_by(
+        first_name=fname,
+        last_name=lname
+    ).first()
 
-    cursor.execute("""
-        SELECT * FROM people WHERE FirstName = ? AND LastName = ?
-    """, (fname, lname))
-
-    rows = cursor.fetchall()
-    col_names = [description[0] for description in cursor.description]
-
-    results = [dict(zip(col_names, row)) for row in rows]
-
-    if results:
-        print(f"Found {len(results)} record(s) for {fname} {lname}.")
+    if person:
+        print(f"Found 1 record for {fname} {lname}.")
+        return person.as_dict()
     else:
         print(f"No records found for {fname} {lname}.")
-
-    conn.close()
-    return results[0] if results else {}  # Return the first match or empty dict
+        return {}

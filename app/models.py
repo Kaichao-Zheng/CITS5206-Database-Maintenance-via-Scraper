@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 import sqlalchemy as sa
 import sqlalchemy.orm as so
-from app import db,login
+from app import db, login
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 
@@ -98,3 +98,21 @@ class IP(db.Model):
     type: so.Mapped[Optional[str]] = so.mapped_column(sa.String(32), nullable=True)
     source: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128), nullable=True)
     is_expired: so.Mapped[Optional[bool]] = so.mapped_column(sa.Boolean, default=False, nullable=False)
+
+class GovPeople(db.Model):
+    __tablename__ = "people"
+
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    salutation: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
+    first_name: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64), index=True)
+    last_name: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64), index=True)
+    organization: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128), index=True)
+    role: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128))
+    gender: so.Mapped[Optional[str]] = so.mapped_column(sa.String(16))
+    city: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
+    state: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
+    country: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
+    business_phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
+    mobile_phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
+    email: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128))
+    sector: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
