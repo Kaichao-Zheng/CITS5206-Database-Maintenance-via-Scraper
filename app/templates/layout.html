@@ -30,15 +30,6 @@
       >
         Log out
       </a>
-
-      {% if nav == 'workspace' %}
-      <a
-        href="{{ url_for('scrape_additional.update_local_db') }}"
-        class="mt-auto bg-violet-700 text-white px-4 py-2 rounded-lg hover:bg-violet-800 text-center"
-      >
-        Update Database
-      </a>
-      {% endif %}
     </div>
   </div>
   <div class="grow flex flex-col h-full">

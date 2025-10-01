@@ -102,4 +102,4 @@ def search_database(fname, lname):
         print(f"No records found for {fname} {lname}.")
 
     conn.close()
-    return results
+    return results[0] if results else {}  # Return the first match or empty dict
