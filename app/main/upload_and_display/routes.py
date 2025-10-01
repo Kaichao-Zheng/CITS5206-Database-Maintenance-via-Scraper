@@ -207,7 +207,8 @@ def process_update_task(app, user_email, source, log_id, limit=20):
             if source == "linkedin":
                 scrape_and_update_people(log_id, limit)
             elif source == "gw":
-                check_local_db(log_id)
+                pass
+                #check_local_db(log_id)
             else:
                 return jsonify({"status": "error", "error": "Invalid source"}), 400
 
