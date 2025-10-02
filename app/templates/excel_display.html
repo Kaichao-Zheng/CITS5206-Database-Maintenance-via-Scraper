@@ -24,6 +24,7 @@
       >
         <option value="linkedin">Linkedin</option>
         <option value="gw">Government Website</option>
+        <option value="senator">Senator websites</option>
       </select>
       <div id="linkedinWarning" class="hidden mb-3 text-sm text-red-600">
         <p>
@@ -40,6 +41,12 @@
         />
       </div>
       <div id="gwWarning" class="hidden mb-3 text-sm text-red-600">
+        <p>
+          This data source is stored in local database. Please go to Settings to
+          keep it updated if needed.
+        </p>
+      </div>
+      <div id="seWarning" class="hidden mb-3 text-sm text-red-600">
         <p>
           This data source is stored in local database. Please go to Settings to
           keep it updated if needed.
@@ -145,6 +152,7 @@
         const dataSource = document.getElementById("dataSource");
         const linkedinWarning = document.getElementById("linkedinWarning");
         const gwWarning = document.getElementById("gwWarning");
+        const seWarning = document.getElementById("seWarning");
         dataSource.addEventListener("change", () => {
           if (dataSource.value === "linkedin") {
             linkedinWarning.classList.remove("hidden");
@@ -155,6 +163,11 @@
             gwWarning.classList.remove("hidden");
           } else {
             gwWarning.classList.add("hidden");
+          }
+          if (dataSource.value === "senator") {
+            seWarning.classList.remove("hidden");
+          } else {
+            seWarning.classList.add("hidden");
           }
         });
 
