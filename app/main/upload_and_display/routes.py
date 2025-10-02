@@ -13,6 +13,7 @@ from flask_mail import Message, Mail
 from threading import Thread
 from app.main.scrape.helper.scrape_information import scrape_and_update_people
 import io
+from io import StringIO
 import csv
 from app.main.scrape_additional.helper.gov_database import search_database
 from app.main.scrape_additional.helper.gov_scraper import update_gov_database
@@ -142,13 +143,19 @@ inverse_field_mapping = {v: k for k, v in field_mapping.items()}
 def export_data():
     people = db.session.query(People).all()
     df = pd.DataFrame([p.as_dict() for p in people])
-    df.rename(columns=inverse_field_mapping, inplace=True)
-    output = BytesIO()
+
+    output = StringIO()
     df.to_csv(output, index=False)
     output.seek(0)
-    return send_file(output,
-                     download_name="people.csv",
-                     as_attachment=True)
+
+    
+    bytes_output = BytesIO(output.getvalue().encode("utf-8"))
+    return send_file(
+        bytes_output,
+        download_name="people.csv",
+        as_attachment=True,
+        mimetype="text/csv"
+    )
 
 def process_gw(log_id):
     people_records = db.session.query(People).all() # Fetch all records in CSV
@@ -384,5 +391,17 @@ def gov_update():
         update_gov_database()
     except Exception as e:
         print(f"Error during government database update: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+    return jsonify({"status": "success"}), 200
+
+
+@ud.route("/senator_update", methods=["POST"])
+@login_required
+def senator_update():
+    try:
+        print("Starting senator database update...")
+        senetor_add_to_database()
+    except Exception as e:
+        print(f"Error during senator database update: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
     return jsonify({"status": "success"}), 200
