@@ -98,15 +98,16 @@ def parse_profile(html: str) -> Dict[str, Optional[str]]:
     party = extract_text_after_heading(["Party"])
     state = extract_text_after_heading(["State/Territory", "State and Territory"])
 
-    phones = set()
+    phones = []
     for tel in soup.select("a[href^='tel:']"):
         num = (tel.get("href") or "").replace("tel:", "").strip()
         if num:
-            phones.add(num)
+            phones.append(num)
     if not phones:
         for m in re.findall(r"\(?\d{1,4}\)?[\s-]?\d{3,4}[\s-]?\d{3,4}", text):
-            phones.add(m)
-    phones_str = "; ".join(sorted(phones)) if phones else None
+            phones.append(m)
+    
+    phones_str = phones[0] if phones else None
 
     emails = set()
     for em in soup.select("a[href^='mailto:']"):
