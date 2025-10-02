@@ -1,5 +1,6 @@
 import re
-from constants import AUS_STATES, PREFIXES, SUFFIXES, GENDERS, MALES, FEMALES
+from .constants import AUS_STATES, PREFIXES, SUFFIXES, GENDERS, MALES, FEMALES
+
 class Person:
     def __init__(self):
         self.salutation = None

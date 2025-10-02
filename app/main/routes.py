@@ -19,12 +19,13 @@ def handle_bad_line(line):
 def workspace():
     form = UploadForm()
 
-    return render_template("/workspace.html", nav="workspace",form=form)
+    return render_template("/workspace.html", nav="workspace", form=form)
 
 @bp.route("/update") # TODO: pass the log id and log records
 @login_required
 def update():
-    return render_template("update.html", nav="workspace",)
+
+    return render_template("update.html", nav="workspace")
 
 @bp.route("/logs")
 @login_required

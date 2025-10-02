@@ -1,5 +1,5 @@
 {% extends 'layout.html' %} {% block main_content %}
-<div class="flex flex-col gap-4 max-w-2xl mx-auto mt-6">
+<div class="space-y-4 max-w-2xl mx-auto py-6 min-w-md overflow-y-auto">
   <h2 class="text-2xl font-semibold mb-2">Scraping Progress</h2>
 
   <div class="w-full bg-gray-200 rounded-full h-6 overflow-hidden shadow-inner">
@@ -9,7 +9,22 @@
     ></div>
   </div>
 
-  <div id="status" class="mt-2 text-gray-700 font-medium">Starting...</div>
+  <div id="status" class="mt-2 text-gray-700 font-medium text-xl">
+    Starting...
+  </div>
+  <div id="log_result" class="mt-2 text-gray-700 font-medium"></div>
+
+  <div
+    id="exportSection"
+    class="flex flex-col gap-4 max-w-2xl mx-auto mt-6 hidden"
+  >
+    <button
+      id="exportBtn"
+      class="button cursor-pointer w-24 bg-violet-700 text-white rounded-md py-2 hover:bg-violet-800 transition-colors duration-300"
+    >
+      ⬇️ Export
+    </button>
+  </div>
 
   <ul id="details" class="mt-4 space-y-1 text-gray-600"></ul>
 </div>
@@ -22,6 +37,7 @@
       .then((res) => res.json())
       .then((data) => {
         document.getElementById("status").innerText = data.status;
+        document.getElementById("log_result").innerText = data.log_result;
         let percent = data.total ? (data.completed / data.total) * 100 : 0;
         document.getElementById("bar").style.width = percent + "%";
 
@@ -31,15 +47,20 @@
         data.details.forEach((d) => {
           let li = document.createElement("li");
           li.className = "flex justify-between px-2 py-1 bg-gray-100 rounded shadow-sm";
-          li.innerText = `${d.record_name} → ${d.status}`;
+          li.innerText = `${d.record_name} → ${d.status}: ${d.detail}`;
           detailsList.appendChild(li);
         });
-
-        if (data.completed !== data.total) {
+        if (data.status === "error") {
+          document.getElementById("status").classList.add("text-red-600", "font-bold");
+        }
+        else if (data.status == "in progress") {
           setTimeout(updateProgress, 1000);
         } else {
           document.getElementById("status").classList.add("text-green-600", "font-bold");
-          window.location.href = "/update_complete";
+          document.getElementById("exportSection").classList.remove("hidden");
+              document.getElementById("exportBtn").addEventListener("click", () => {
+    window.location.href = "/export";
+  });
         }
       })
       .catch((err) => {

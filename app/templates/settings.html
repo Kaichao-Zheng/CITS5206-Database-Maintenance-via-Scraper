@@ -4,5 +4,40 @@
     >Change Password</a
   >
   <a href="{{ url_for('auth.change_email') }}" class="button">Change Email</a>
+  <div class="flex flex-col items-center gap-2">
+    <button id="update-gov-db" class="button">
+      Update Government Database
+    </button>
+    <p id="update-gov-db-status"></p>
+  </div>
 </div>
+<script>
+  document
+    .getElementById("update-gov-db")
+    .addEventListener("click", async () => {
+      document.getElementById("update-gov-db-status").innerText =
+        "Updating government database...It will be done shortly. Please wait.";
+      try {
+        const response = await fetch("/gov_update", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token() }}",
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          document.getElementById("update-gov-db-status").innerText =
+            "Update government database successfully.";
+        } else {
+          const errorData = await response.json();
+          document.getElementById("update-gov-db-status").innerText =
+            "Error: " + (errorData.message || "Unknown error occurred.");
+        }
+      } catch (error) {
+        document.getElementById("update-gov-db-status").innerText =
+          "Error: " + error.message;
+      }
+    });
+</script>
 {% endblock %}

@@ -1,11 +1,9 @@
 {% extends 'layout.html' %} {% block main_content %}
-<div
-  class="flex justify-center items-start h-full overflow-x-auto overflow-y-auto bg-white"
->
-  <table class="text-left w-full border-collapse">
+<div class="flex justify-center items-start h-full overflow-auto bg-white">
+  <table class="text-left w-full border-collapse table-fixed">
     <thead>
       <tr class="border-b">
-        <th class="py-3 px-4 font-semibold text-gray-700 min-w-40">Date</th>
+        <th class="py-3 px-4 font-semibold text-gray-700">Date</th>
         <th class="py-3 px-4 font-semibold text-gray-700">Summary</th>
       </tr>
     </thead>
@@ -21,7 +19,7 @@
         <td class="py-3 px-4">{{ log.result }}</td>
       </tr>
       <tr class="log-detail hidden bg-gray-100">
-        <td colspan="2" class="p-0">
+        <td colspan="2" class="p-0 break-words">
           <table class="w-full border-b border-gray-400">
             <thead>
               <tr class="border-b border-gray-300">

@@ -34,4 +34,6 @@ def create_app(config_class=os.environ.get("FLASK_CONFIG") or DevelopmentConfig)
         app.register_blueprint(upload_and_display.ud)
         from .main import scrape
         app.register_blueprint(scrape.sc)
+        from .main import scrape_additional
+        app.register_blueprint(scrape_additional.sca)
     return app

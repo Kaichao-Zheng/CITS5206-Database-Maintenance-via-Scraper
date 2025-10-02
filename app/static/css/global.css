@@ -11,6 +11,9 @@ body {
   color: #ffffff;
   cursor: pointer;
 }
+.button:hover {
+  background-color: #3700b3;
+}
 
 input:focus {
   outline: none;

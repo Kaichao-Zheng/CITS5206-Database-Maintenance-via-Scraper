@@ -226,6 +226,9 @@ def scrape_and_update_people(log_id, number=10):
                 db.session.add(log_detail)
                 db.session.commit()
                 print(f"Error updating record for {name}: {e}")
+        log.status = "completed"
+        log.result = f"Successfully updated: {n} records, failed: {len(people_records) - n} records."
+        db.session.commit()
     except Exception as e:
         print(f"Error during scraping and updating: {e}")
         log.status = "error"
@@ -233,8 +236,5 @@ def scrape_and_update_people(log_id, number=10):
         db.session.commit()
     finally:
         driver.quit()
-        log.status = "completed"
-        log.result = f"Successfully updated: {n} records, failed: {len(people_records) - n} records."
-        db.session.commit()
-        
+
     return {"message": "Scraping + update successful"}
