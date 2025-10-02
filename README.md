@@ -47,7 +47,7 @@
    ```bash
    # create environment
    conda create -n yourEnvName python=3.10.18
-
+   
    # activate environment
    conda activate yourEnvName
    ```
@@ -62,7 +62,7 @@
 
   ```bash
   pip install <package-name>
-
+  
   # commit in requirements.txt
   pip freeze > requirements.txt
   ```
@@ -75,13 +75,10 @@ Or create a `.env` file that has the following content:
 ```env
 # LinkedIn Account Login
 LINKEDIN_EMAIL=some-email@email.address
-LINKEDIN_PASSWORD=your_linkedin_password
-
-# Cookie Login
-LI_AT_COOKIE=your_linkedin_cookie
+LINKEDIN_PASSWORD=your-linkedin-password
 
 # System Default User Info
-ADMIN_PASSWORD=app_login_password
+ADMIN_PASSWORD=app-login-password
 ADMIN_EMAIL=   # Optional, default is blank
 
 FLASK_APP=run.py
@@ -93,8 +90,6 @@ FLASK_ENV=development
 # CSRF protection; leave blank for default dev key
 SECRET_KEY=
 ```
-
-[How to sign in LinkedIn using a cookie?](how-to-sign-in-linkedin-using-a-cookie.md)
 
 ### Create database and configure schema
 
