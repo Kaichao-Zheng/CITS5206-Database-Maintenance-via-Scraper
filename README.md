@@ -35,11 +35,11 @@
 
    ```bash
    # create environment
-   python3.10 -m venv yourEnvName     # or other name you like
+   python3.10 -m venv .venv     # or other name you like
 
    # activate environment
-   source yourEnvName/bin/activate    # macOS/Linux
-   .\yourEnvName\Scripts\activate     # Windows Powershell
+   source .venv/bin/activate    # macOS/Linux
+   .\.venv\Scripts\activate     # Windows Powershell
    ```
 
 2. Or with conda:
