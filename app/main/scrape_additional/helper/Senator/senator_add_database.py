@@ -19,7 +19,7 @@ def senetor_add_to_database():
             last_name=row.get("last_name"),
             sector = row.get("sector"),
             state=row.get("state"),
-            bussiness_phone=row.get("phones"),
+            business_phone=row.get("phones"),
             email=row.get("emails"),
         )
         db.session.add(s)  
