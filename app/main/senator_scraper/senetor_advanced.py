@@ -1,5 +1,4 @@
 import argparse
-import csv
 import random
 import re
 import time
@@ -8,13 +7,12 @@ from dataclasses import dataclass, asdict
 from typing import Dict, List, Optional
 from urllib.parse import urlencode
 import urllib.robotparser as robotparser
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-from concurrent.futures import ThreadPoolExecutor, as_completed
-
 
 BASE = "https://www.aph.gov.au"
 SEARCH_PATH = "/Senators_and_Members/Parliamentarian_Search_Results"
@@ -49,6 +47,7 @@ class SenatorRow:
     first_name: str
     last_name: str
     profile_url: str
+    sector: str
     party: Optional[str] = None
     state: Optional[str] = None
     phones: Optional[str] = None
@@ -129,8 +128,7 @@ def parse_profile(html: str) -> Dict[str, Optional[str]]:
     }
 
 
-def fetch_profile(session, p):
-    """Worker for fetching single profile with retry"""
+def fetch_profile(session, p, sector: str):
     profile_url = p["href"]
     if not allowed_by_robots(profile_url):
         return None
@@ -141,7 +139,6 @@ def fetch_profile(session, p):
 
     details = parse_profile(pr.text)
 
-    # Extract first and last names
     parts = p["name"].split()
     first_name = parts[1] if len(parts) > 1 else ""
     last_name = parts[2] if len(parts) > 2 else ""
@@ -150,6 +147,7 @@ def fetch_profile(session, p):
         first_name=first_name,
         last_name=last_name,
         profile_url=profile_url,
+        sector=sector,
         party=details.get("party"),
         state=details.get("state"),
         phones=details.get("phones"),
@@ -159,54 +157,51 @@ def fetch_profile(session, p):
     )
 
 
-def fetch_senators_all(state: Optional[str] = None, max_pages: int = 13,
-                       limit: Optional[int] = None, max_workers: int = 8) -> List[Dict]:
+def fetch_senators_combined(limit: Optional[int] = None, max_workers: int = 8) -> List[Dict]:
+    """
+    Fetch both House of Representatives (mem=1) and Senators (sen=1)
+    """
     session = make_session()
     rows: List[SenatorRow] = []
 
-    for page in range(1, max_pages + 1):
-        params = {
-            "page": page,
-            "q": "",
-            "mem": 1,
-            "par": -1,
-            "gen": 0,
-            "ps": 12,
-            "st": 1,
-        }
+    for sector_type in [("House of Representatives", {"mem": 1, "par": -1, "gen": 0, "ps": 12}),
+                        ("Senator", {"sen": 1, "par": -1, "gen": 0, "ps": 12})]:
 
-        url = BASE + SEARCH_PATH + "?" + urlencode(params)
-        print("Fetching page:", page, "URL:", url)
+        sector_name, base_params = sector_type
+        max_pages = 13 if sector_name == "House of Representatives" else 7
 
-        if not allowed_by_robots(url):
-            print("Blocked by robots for URL:", url)
-            continue
+        for page in range(1, max_pages + 1):
+            params = {"page": page, **base_params}
+            url = BASE + SEARCH_PATH + "?" + urlencode(params)
+            print(f"Fetching page {page} of {sector_name}: {url}")
 
-        polite_sleep()
-        resp = session.get(url, timeout=20)
-        resp.raise_for_status()
+            if not allowed_by_robots(url):
+                print("Blocked by robots for URL:", url)
+                continue
 
-        pairs = parse_search_results(resp.text)
+            polite_sleep()
+            resp = session.get(url, timeout=20)
+            resp.raise_for_status()
 
-        # multi-threaded fetch
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = {executor.submit(fetch_profile, session, p): p for p in pairs}
-            for future in as_completed(futures):
-                try:
-                    row = future.result()
-                    if row:
-                        rows.append(row)
-                        if limit and len(rows) >= limit:
-                            return [asdict(r) for r in rows]
-                except Exception as e:
-                    print("Error fetching profile:", e)
+            pairs = parse_search_results(resp.text)
+
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                futures = {executor.submit(fetch_profile, session, p, sector_name): p for p in pairs}
+                for future in as_completed(futures):
+                    try:
+                        row = future.result()
+                        if row:
+                            rows.append(row)
+                            if limit and len(rows) >= limit:
+                                return [asdict(r) for r in rows]
+                    except Exception as e:
+                        print("Error fetching profile:", e)
 
     return [asdict(r) for r in rows]
 
 
 def main():
-    rows_json = fetch_senators_all(state=None, max_pages=13, limit=None, max_workers=10)
-
+    rows_json = fetch_senators_combined(limit=None, max_workers=10)
     print(json.dumps(rows_json, ensure_ascii=False, indent=2))
 
 
