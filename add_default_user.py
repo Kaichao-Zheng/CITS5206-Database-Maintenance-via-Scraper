@@ -9,7 +9,7 @@ load_dotenv()
 app = create_app()
 with app.app_context():
     password_plain = os.environ.get("ADMIN_PASSWORD")
-    email = os.environ.get("ADMIN_EMAIL")
+    email = os.environ.get("ADMIN_EMAIL","")
     if not password_plain:
         raise ValueError("ADMIN_PASSWORD environment variable not set.")
     hashed_password = generate_password_hash(password_plain)

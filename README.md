@@ -67,26 +67,28 @@
   pip freeze > requirements.txt
   ```
 
-### Configure User Authentication
+### Configure User Authentication and Environment
 
-Create a `.env` file in the root directory:
+Copy the file `.env.example` and rename the file to `.env` in the root directory.
+Or create a `.env` file that has the following content:
 
 ```env
-# Password Login
+# LinkedIn Account Login
 LINKEDIN_EMAIL=some-email@email.address
 LINKEDIN_PASSWORD=your_linkedin_password
 
 # Cookie Login
 LI_AT_COOKIE=your_linkedin_cookie
 
-# Web Application Password
+# System Default User Info
 ADMIN_PASSWORD=app_login_password
+ADMIN_EMAIL=   # Optional, default is blank
 
 FLASK_APP=run.py
 FLASK_CONFIG=config.DevelopmentConfig
 
 # leave blank for production env
-FLASK_ENV=
+FLASK_ENV=development
 
 # CSRF protection; leave blank for default dev key
 SECRET_KEY=
@@ -109,18 +111,3 @@ python add_default_user.py # add default admin user when you start the program f
 flask run # Or
 python run.py
 ```
-
-## User Scraping
-
-```python
-person = Person("https://www.linkedin.com/in/joey-sham-aa2a50122", driver=driver, scrape=False, close_on_complete=False)
-```
-
-- `scrape=False`: it doesn't automatically scrape the profile, but Chrome will open the linkedin page anyways.
-
-- when you run `person.scrape()`, it'll scrape and close the browser.
-- `close_on_complete=False` keeps browser open to scrape next profile.
-
-## URL
-
-- The URL pattern should be `https://www.linkedin.com/in/joey-sham-aa2a50122` so I trim the strings after and include `?mini`
