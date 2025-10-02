@@ -1,5 +1,5 @@
 import json
-from senator_advanced import fetch_senators_all  
+from .senator_advanced import fetch_senators_combined  
 import os
 import sys   
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
@@ -10,7 +10,7 @@ from app.models import SenatorPeople
 
 def senetor_add_to_database():
     
-    rows_json = fetch_senators_all(state=None, max_pages=13, limit=None, max_workers=10)
+    rows_json = fetch_senators_combined(limit=None, max_workers=10)
 
     
     for row in rows_json:
@@ -18,7 +18,6 @@ def senetor_add_to_database():
             first_name=row.get("first_name"),
             last_name=row.get("last_name"),
             sector = row.get("sector"),
-            company=row.get("party"),
             state=row.get("state"),
             bussiness_phone=row.get("phones"),
             email=row.get("emails"),
