@@ -1,7 +1,8 @@
 from flask import flash, redirect, url_for, request, jsonify
 from flask_login import login_required
 from app.main.scrape_additional import sca
-from .helper.gov_scraper import update_gov_database, search_database
+from .helper.gov_scraper import update_gov_database
+from .helper.gov_database import search_database
 
 @sca.route('/update_local_db', methods=['GET'])
 @login_required
