@@ -2,9 +2,9 @@ from app.main.upload_and_display import ud
 from flask import render_template,flash, redirect,url_for,request, jsonify,send_file,current_app
 import sqlalchemy as sa
 from app import db
-from app.models import User,People, Log, LogDetail
+from app.models import People, Log, LogDetail, GovPeople
 from app.main.forms import UploadForm
-from flask_login import current_user, login_user,logout_user,login_required
+from flask_login import current_user, login_required
 import pandas as pd
 from charset_normalizer import detect
 from requests.exceptions import RequestException
@@ -15,6 +15,7 @@ from app.main.scrape.helper.scrape_information import scrape_and_update_people
 import io
 import csv
 from app.main.scrape_additional.helper.gov_database import search_database
+from app.main.scrape_additional.helper.gov_scraper import update_gov_database
 
 field_mapping = {
             "FirstName": "first_name",
@@ -119,7 +120,7 @@ def update():
     limit = int(payload.get("limit")) if payload.get("limit") else 20
     print("limit:", limit)
 
-    log = Log(status="in_progress")
+    log = Log(status="in progress")
     db.session.add(log)
     db.session.commit()
     if not source or not data:
@@ -132,12 +133,15 @@ def update():
 
     return jsonify({"status": "success", "log_id": log.id}), 202
 
+# Invert the dictionary to map DB fields back to original headers
+inverse_field_mapping = {v: k for k, v in field_mapping.items()}
 
 @ud.route("/export", methods=["GET"])
 @login_required
 def export_data():
     people = db.session.query(People).all()
     df = pd.DataFrame([p.as_dict() for p in people])
+    df.rename(columns=inverse_field_mapping, inplace=True)
     output = BytesIO()
     df.to_csv(output, index=False)
     output.seek(0)
@@ -145,9 +149,9 @@ def export_data():
                      download_name="people.csv",
                      as_attachment=True)
 
-def check_local_db(log_id):
+def process_gw(log_id):
     people_records = db.session.query(People).all() # Fetch all records in CSV
-    # Below manages logging and error handling
+    gov_people_records = db.session.query(GovPeople).all() # Fetch all records from GovPeople
     log = db.session.query(Log).filter_by(id=log_id).first()
     if not people_records:
         log.result = "No People records found"
@@ -155,66 +159,83 @@ def check_local_db(log_id):
         db.session.commit()
         return {"error": "No People records found"}
     
+    if not gov_people_records:
+        log.result = "No Local Government records found"
+        log.status = "error"
+        db.session.commit()
+        return {"error": "No Local Government records found"}
+
     n = 0
-    for person in people_records:
-        new_person = search_database(person.first_name, person.last_name) # Searches each record against local government database
-        if new_person:
-            print(new_person[0]['FirstName'])
+    try:
+        for record in people_records:
+            new_person_detail = search_database(record.first_name, record.last_name) 
+            print(new_person_detail)
             person = db.session.query(People).filter(
-                sa.func.lower(People.first_name) == new_person[0]['FirstName'].lower(),
-                sa.func.lower(People.last_name) == new_person[0]['LastName'].lower()
-            ).first()
-            if person:
-                person.salutation = new_person[0]['Salutation']
-                person.organization = f'{new_person[0]["Organisation"]} - {new_person[0]["Department"]}'
-                person.role = new_person[0]['Position']
-                person.city = new_person[0]['City']
-                person.state = new_person[0]['State']
-                person.country = new_person[0]['Country']
-                person.email = new_person[0]['Email']
-                person.business_phone = new_person[0]['Phone']
+                        sa.func.lower(People.first_name) == record.first_name.lower(),
+                        sa.func.lower(People.last_name) == record.last_name.lower()
+                    ).first()# Searches each record against local government database
+            if new_person_detail:
+                print(new_person_detail['first_name'], new_person_detail['last_name'], "found in GovPeople database")
+                person.salutation = new_person_detail['salutation']
+                person.organization = new_person_detail['organization']
+                person.role = new_person_detail['role']
+                person.city = new_person_detail['city']
+                person.state = new_person_detail['state']
+                person.country = new_person_detail['country']
+                person.email = new_person_detail['email']
+                person.business_phone = new_person_detail['business_phone']
 
                 n += 1
                 log_detail = LogDetail(
                     log_id=log_id,
-                    record_name=f'record_{n}', ### CHANGE THIS
+                    record_name=f'{person.first_name} {person.last_name}',
                     status="success",
-                    source=new_person[0]['Source'],
-                    detail=f'record_{n}' ### CHANGE THIS
+                    source="GovPeople Database",
+                    detail=f'{new_person_detail}' 
                 )
                 db.session.add(log_detail)
                 db.session.commit()
+            else:
+                log_detail = LogDetail(
+                    log_id=log_id,
+                    record_name=f'{person.first_name} {person.last_name}',
+                    status="error",
+                    source="N/A",
+                    detail="Person not found in GovPeople database"
+                )
+                db.session.add(log_detail)
                 db.session.commit()
-        else:
-            log_detail = LogDetail(
-                log_id=log_id,
-                record_name=f'record_{n}',
-                status="error",
-                source="N/A",
-                detail="Person not found in database"
-            )
-            db.session.add(log_detail)
-            db.session.commit()
+        log.status = "completed"
+        log.result = f"Successfully updated: {n} records, failed: {len(people_records) - n} records."
+        db.session.commit()
+    except Exception as e:
+        print(f"Error during scraping and updating: {e}")
+        log.status = "error"
+        log.result = str(e)
+        db.session.commit()
 
 # limit is only for linkedin source
 def process_update_task(app, user_email, source, log_id, limit=20):
     # Your processing / database update logic
     # Example: save CSV temporarily
-    print(f"Starting update for user: {user_email}")
     with app.app_context():
+        print(f"Starting update for user: {user_email}")
+        log=db.session.get(Log, log_id)
 
         try:
             if source == "linkedin":
                 scrape_and_update_people(log_id, limit)
             elif source == "gw":
-                pass
-                #check_local_db(log_id)
+                process_gw(log_id)
             else:
                 return jsonify({"status": "error", "error": "Invalid source"}), 400
 
-            print("Update successful")
+            print("Update completed")
         except Exception as e:
             print("Update failed:", str(e))
+            log.status = "error"
+            log.result = str(e)
+            db.session.commit()
             return jsonify({"error": str(e)}), 500
         
         # Step 4: Fetch all People (or limit to updated ones if you prefer)
@@ -263,11 +284,12 @@ def update_progress(log_id):
     completed = sum(1 for d in details if d.status in ("success", "error"))
     
     return jsonify({
-        "status": log.result or "In progress",
+        "status": log.status,
+        "log_result": log.result,
         "total": total,
         "completed": completed,
         "details": [
-            {"record_name": d.record_name, "status": d.status, "source": d.source}
+            {"record_name": d.record_name, "status": d.status, "source": d.source, "detail": d.detail}
             for d in details
         ]
     })
@@ -276,3 +298,15 @@ def update_progress(log_id):
 @login_required
 def update_complete():
     return render_template("update-complete.html", nav="workspace")
+
+
+@ud.route("/gov_update", methods=["POST"])
+@login_required
+def gov_update():
+    try:
+        print("Starting government database update...")
+        update_gov_database()
+    except Exception as e:
+        print(f"Error during government database update: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+    return jsonify({"status": "success"}), 200
