@@ -126,3 +126,29 @@ class GovPeople(db.Model):
             for column in self.__table__.columns
             if column.name != 'id'  # Exclude auto-incremented id
         }
+    
+class SenatorPeople:
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    salutation: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
+    first_name: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64), index=True)
+    last_name: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64), index=True)
+    organization: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128), index=True)
+    role: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128))
+    gender: so.Mapped[Optional[str]] = so.mapped_column(sa.String(16))
+    city: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
+    state: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
+    country: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
+    business_phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
+    mobile_phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
+    email: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128))
+    sector: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
+
+    def __repr__(self):
+        return '<SenatorPeople {}>'.format(self.first_name or '', self.last_name or '')
+
+    def as_dict(self):
+        return {
+            column.name: getattr(self, column.name)
+            for column in self.__table__.columns
+            if column.name != 'id'  # Exclude auto-incremented id
+        }
