@@ -140,7 +140,7 @@ class SenatorPeople(db.Model):
     city: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
     state: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
     country: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    bussiness_phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
+    business_phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
     mobile_phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
     email: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128))
     sector: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
