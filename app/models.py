@@ -127,7 +127,9 @@ class GovPeople(db.Model):
             if column.name != 'id'  # Exclude auto-incremented id
         }
     
-class SenatorPeople:
+class SenatorPeople(db.Model):
+    __tablename__ = "senator_people"
+
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     salutation: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
     first_name: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64), index=True)
@@ -138,7 +140,7 @@ class SenatorPeople:
     city: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
     state: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
     country: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
-    business_phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
+    bussiness_phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
     mobile_phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
     email: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128))
     sector: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
