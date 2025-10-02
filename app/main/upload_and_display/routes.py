@@ -2,7 +2,7 @@ from app.main.upload_and_display import ud
 from flask import render_template,flash, redirect,url_for,request, jsonify,send_file,current_app
 import sqlalchemy as sa
 from app import db
-from app.models import People, Log, LogDetail, GovPeople
+from app.models import People, Log, LogDetail, GovPeople, SenatorPeople
 from app.main.forms import UploadForm
 from flask_login import current_user, login_required
 import pandas as pd
@@ -16,6 +16,7 @@ import io
 import csv
 from app.main.scrape_additional.helper.gov_database import search_database
 from app.main.scrape_additional.helper.gov_scraper import update_gov_database
+from app.main.scrape_additional.helper.Senator.senator_add_database import senetor_add_to_database, search_database_for_senator
 
 field_mapping = {
             "FirstName": "first_name",
@@ -214,6 +215,79 @@ def process_gw(log_id):
         log.result = str(e)
         db.session.commit()
 
+
+    except Exception as e:
+        print(f"Error during senator update: {e}")
+        log.status = "error"
+        log.result = str(e)
+        db.session.commit()
+
+def process_se(log_id):
+    people_records = db.session.query(People).all()  # Fetch all records in People
+    senator_records = db.session.query(SenatorPeople).all()  # Fetch all records from Senator
+    log = db.session.query(Log).filter_by(id=log_id).first()
+
+    if not people_records:
+        log.result = "No People records found"
+        log.status = "error"
+        db.session.commit()
+        return {"error": "No People records found"}
+    
+    if not senator_records:
+        log.result = "No Senator records found"
+        log.status = "error"
+        db.session.commit()
+        return {"error": "No Senator records found"}
+
+    n = 0
+    try:
+        for record in people_records:
+            new_person_detail = search_database_for_senator(record.first_name, record.last_name)
+            person = db.session.query(People).filter(
+                sa.func.lower(People.first_name) == record.first_name.lower(),
+                sa.func.lower(People.last_name) == record.last_name.lower()
+            ).first()
+
+            if new_person_detail:
+                print(new_person_detail['first_name'], new_person_detail['last_name'], "found in Senator database")
+               
+                person.sector = new_person_detail.get("sector")
+                person.state = new_person_detail.get('state')
+                person.email = new_person_detail.get('email')
+                person.business_phone = new_person_detail.get('business_phone')
+
+                n += 1
+                log_detail = LogDetail(
+                    log_id=log_id,
+                    record_name=f'{person.first_name} {person.last_name}',
+                    status="success",
+                    source="Senator Database",
+                    detail=f'{new_person_detail}'
+                )
+                db.session.add(log_detail)
+                db.session.commit()
+            else:
+                log_detail = LogDetail(
+                    log_id=log_id,
+                    record_name=f'{person.first_name} {person.last_name}',
+                    status="error",
+                    source="N/A",
+                    detail="Person not found in Senator database"
+                )
+                db.session.add(log_detail)
+                db.session.commit()
+
+        
+        log.status = "completed"
+        log.result = f"Successfully updated: {n} records, failed: {len(people_records) - n} records."
+        db.session.commit()
+
+    except Exception as e:
+        print(f"Error during senator update: {e}")
+        log.status = "error"
+        log.result = str(e)
+        db.session.commit()
+
 # limit is only for linkedin source
 def process_update_task(app, user_email, source, log_id, limit=20):
     # Your processing / database update logic
@@ -227,6 +301,8 @@ def process_update_task(app, user_email, source, log_id, limit=20):
                 scrape_and_update_people(log_id, limit)
             elif source == "gw":
                 process_gw(log_id)
+            elif source == "senator":
+                process_se(log_id)
             else:
                 return jsonify({"status": "error", "error": "Invalid source"}), 400
 
