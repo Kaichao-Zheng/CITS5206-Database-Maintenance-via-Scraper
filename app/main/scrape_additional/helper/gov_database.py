@@ -1,4 +1,5 @@
-from app import GovPeople, db
+from app import db
+from app.models import GovPeople
 
 FIELD_MAP = {
     "Salutation": "salutation",
@@ -15,39 +16,26 @@ FIELD_MAP = {
 }
 
 def commit_batch(batch):
-    for person_data in batch:
-        # Try to find an existing record based on name + role
+    for new_person in batch:
         existing = GovPeople.query.filter_by(
-            first_name = person_data.get("FirstName"),
-            last_name = person_data.get("LastName"),
-            # role = person_data.get("Position") # Optional: Uncomment if role should be part of uniqueness
+            first_name=new_person.first_name,
+            last_name=new_person.last_name,
         ).first()
 
         if existing:
-            for key, value in person_data.items():
-                field = FIELD_MAP.get(key)
-                if field and hasattr(existing, field):
-                    setattr(existing, field, value)
+            for field in [
+                "salutation", "organization", "role", "gender",
+                "city", "state", "country", "business_phone",
+                "mobile_phone", "email", "sector"
+            ]:
+                new_val = getattr(new_person, field, None)
+                if new_val:
+                    setattr(existing, field, new_val)
         else:
-            # Create new record
-            new_person = GovPeople(
-                salutation=person_data.get("Salutation"),
-                first_name=person_data.get("FirstName"),
-                last_name=person_data.get("LastName"),
-                organization=person_data.get("Organisation"),
-                role=person_data.get("Position"),
-                gender=person_data.get("Gender"),
-                city=person_data.get("City"),
-                state=person_data.get("State"),
-                country=person_data.get("Country"),
-                business_phone=person_data.get("Phone"),
-                mobile_phone=None,
-                email=person_data.get("Email"),
-                sector=None
-            )
             db.session.add(new_person)
 
     db.session.commit()
+
 
 def search_database(fname, lname):
     person = GovPeople.query.filter_by(
