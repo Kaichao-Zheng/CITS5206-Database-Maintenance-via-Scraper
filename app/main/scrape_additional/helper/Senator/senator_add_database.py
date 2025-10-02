@@ -8,25 +8,29 @@ from app import db
 from app.models import SenatorPeople
    
 
+from sqlalchemy import delete
+
 def senetor_add_to_database():
-    
     rows_json = fetch_senators_combined(limit=None, max_workers=10)
 
-    
+   
+    db.session.execute(delete(SenatorPeople))
+    db.session.commit()  
+
+   
     for row in rows_json:
         s = SenatorPeople(
             first_name=row.get("first_name"),
             last_name=row.get("last_name"),
-            sector = row.get("sector"),
+            sector=row.get("sector"),
             state=row.get("state"),
             business_phone=row.get("phones"),
             email=row.get("emails"),
         )
-        db.session.add(s)  
+        db.session.add(s)
 
-    
-    db.session.commit()
-    print(f"Inserted {len(rows_json)} records into senetor table.")
+    db.session.commit() 
+    print(f"Inserted {len(rows_json)} records into senator table.")
 
 def search_database_for_senator(fname, lname):
     person = SenatorPeople.query.filter_by(
