@@ -1,9 +1,31 @@
 {% extends 'layout.html' %} {% block main_content %}
+
+<div
+  id="loading-overlay"
+  class="hidden fixed inset-0 bg-[#d0bcfe] bg-opacity-50 z-50 flex items-center justify-center"
+>
+  <div class="bg-white p-6 rounded-lg shadow-xl text-center">
+    <div
+      class="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-700 mx-auto mb-4"
+    ></div>
+    <p class="text-lg">Updating government database...</p>
+    <p class="text-sm text-gray-600 mt-2">Please do not close this page.</p>
+  </div>
+</div>
+
 <div class="flex flex-col items-center justify-center w-full h-full gap-8">
-  <a href="{{ url_for('auth.change_password') }}" class="button"
+  <a
+    href="{{ url_for('auth.change_password') }}"
+    class="button"
+    id="change-password-btn"
     >Change Password</a
   >
-  <a href="{{ url_for('auth.change_email') }}" class="button">Change Email</a>
+  <a
+    href="{{ url_for('auth.change_email') }}"
+    class="button"
+    id="change-email-btn"
+    >Change Email</a
+  >
   <div class="flex flex-col items-center gap-2">
     <button id="update-gov-db" class="button">
       Update Government Database
@@ -11,12 +33,34 @@
     <p id="update-gov-db-status"></p>
   </div>
 </div>
+
 <script>
+  const buttons = document.querySelectorAll("a.button, button.button");
+  const overlay = document.getElementById("loading-overlay");
+
+  function disableNavigation(disable) {
+    buttons.forEach((button) => {
+      button.style.pointerEvents = disable ? "none" : "auto";
+      button.style.opacity = disable ? "0.5" : "1";
+    });
+    overlay.classList.toggle("hidden", !disable);
+  }
+
+  // Add event listener to handle page navigation attempts
+  window.addEventListener("beforeunload", (e) => {
+    if (!overlay.classList.contains("hidden")) {
+      e.preventDefault();
+      e.returnValue =
+        "Changes are being saved. Are you sure you want to leave?";
+    }
+  });
+
   document
     .getElementById("update-gov-db")
     .addEventListener("click", async () => {
-      document.getElementById("update-gov-db-status").innerText =
-        "Updating government database...It will be done shortly. Please wait.";
+      disableNavigation(true);
+      document.getElementById("update-gov-db-status").innerText = "";
+
       try {
         const response = await fetch("/gov_update", {
           method: "POST",
@@ -25,6 +69,7 @@
             "X-CSRFToken": "{{ csrf_token() }}",
           },
         });
+
         if (response.ok) {
           const data = await response.json();
           document.getElementById("update-gov-db-status").innerText =
@@ -37,6 +82,8 @@
       } catch (error) {
         document.getElementById("update-gov-db-status").innerText =
           "Error: " + error.message;
+      } finally {
+        disableNavigation(false);
       }
     });
 </script>
