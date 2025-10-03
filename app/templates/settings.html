@@ -32,6 +32,12 @@
     </button>
     <p id="update-gov-db-status"></p>
   </div>
+  <div class="flex flex-col items-center gap-2">
+    <button id="update-se-db" class="button">
+      Update Senetor Database
+    </button>
+    <p id="update-se-db-status"></p>
+  </div>
 </div>
 
 <script>
@@ -85,6 +91,38 @@
       } finally {
         disableNavigation(false);
       }
-    });
+    })
+  document
+    .getElementById("update-se-db")
+    .addEventListener("click", async () => {
+      disableNavigation(true);
+      document.getElementById("update-se-db-status").innerText = "";
+
+      try {
+        const response = await fetch("/senator_update", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token() }}",
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          document.getElementById("update-se-db-status").innerText =
+            "Update senator database successfully.";
+        } else {
+          const errorData = await response.json();
+          document.getElementById("update-se-db-status").innerText =
+            "Error: " + (errorData.message || "Unknown error occurred.");
+        }
+      } catch (error) {
+        document.getElementById("update-se-db-status").innerText =
+          "Error: " + error.message;
+      } finally {
+        disableNavigation(false);
+      }
+    })
+    ;
 </script>
 {% endblock %}
