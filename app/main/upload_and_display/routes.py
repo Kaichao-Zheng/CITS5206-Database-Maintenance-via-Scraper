@@ -15,9 +15,9 @@ from app.main.scrape.helper.scrape_information import scrape_and_update_people
 import io
 from io import StringIO
 import csv
-from app.main.scrape_additional.helper.gov_database import search_database
-from app.main.scrape_additional.helper.gov_scraper import update_gov_database
-from app.main.scrape_additional.helper.Senator.senator_add_database import senator_add_to_database, search_database_for_senator
+from app.main.scrape_additional.Government.gov_database import search_database
+from app.main.scrape_additional.Government.gov_scraper import update_gov_database
+from app.main.scrape_additional.Senator.senator_add_database import senator_add_to_database, search_database_for_senator
 
 field_mapping = {
             "FirstName": "first_name",

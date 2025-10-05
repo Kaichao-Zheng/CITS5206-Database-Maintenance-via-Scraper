@@ -4,8 +4,8 @@ import concurrent.futures
 from bs4 import BeautifulSoup
 from typing import Optional, List
 
-from app.main.scrape_additional.helper.gov_scraper_person import Person
-from app.main.scrape_additional.helper.gov_database import commit_batch
+from app.main.scrape_additional.Government.gov_scraper_person import Person
+from app.main.scrape_additional.Government.gov_database import commit_batch
 from app import db
 from app.models import GovPeople
 
