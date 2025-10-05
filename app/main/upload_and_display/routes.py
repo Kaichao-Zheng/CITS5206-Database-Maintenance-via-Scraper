@@ -17,7 +17,7 @@ from io import StringIO
 import csv
 from app.main.scrape_additional.helper.gov_database import search_database
 from app.main.scrape_additional.helper.gov_scraper import update_gov_database
-from app.main.scrape_additional.helper.Senator.senator_add_database import senetor_add_to_database, search_database_for_senator
+from app.main.scrape_additional.helper.Senator.senator_add_database import senator_add_to_database, search_database_for_senator
 
 field_mapping = {
             "FirstName": "first_name",
@@ -400,7 +400,7 @@ def gov_update():
 def senator_update():
     try:
         print("Starting senator database update...")
-        senetor_add_to_database()
+        senator_add_to_database()
     except Exception as e:
         print(f"Error during senator database update: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500

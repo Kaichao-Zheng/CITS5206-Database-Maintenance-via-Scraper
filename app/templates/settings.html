@@ -32,12 +32,6 @@
     </button>
     <p id="update-gov-db-status"></p>
   </div>
-  <div class="flex flex-col items-center gap-2">
-    <button id="update-se-db" class="button">
-      Update Senetor Database
-    </button>
-    <p id="update-se-db-status"></p>
-  </div>
 </div>
 
 <script>
@@ -91,7 +85,7 @@
       } finally {
         disableNavigation(false);
       }
-    })
+    });
   document
     .getElementById("update-se-db")
     .addEventListener("click", async () => {
@@ -122,7 +116,6 @@
       } finally {
         disableNavigation(false);
       }
-    })
-    ;
+    });
 </script>
 {% endblock %}

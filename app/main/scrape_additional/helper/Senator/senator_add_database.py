@@ -10,7 +10,7 @@ from app.models import SenatorPeople
 
 from sqlalchemy import delete
 
-def senetor_add_to_database():
+def senator_add_to_database():
     rows_json = fetch_senators_combined(limit=None, max_workers=10)
 
    
