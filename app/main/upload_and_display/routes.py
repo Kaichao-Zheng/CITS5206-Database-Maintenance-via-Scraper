@@ -258,10 +258,16 @@ def process_se(log_id):
             if new_person_detail:
                 print(new_person_detail['first_name'], new_person_detail['last_name'], "found in Senator database")
                
-                person.sector = new_person_detail.get("sector")
+                person.salutation = new_person_detail.get('salutation')
+                person.gender = new_person_detail.get('gender')
+                person.organization = new_person_detail.get('organization')
+                person.role = new_person_detail.get('role')
+                person.city = new_person_detail.get('city')
                 person.state = new_person_detail.get('state')
+                person.country = new_person_detail.get('country')
                 person.email = new_person_detail.get('email')
                 person.business_phone = new_person_detail.get('business_phone')
+                person.sector = new_person_detail.get("sector")
 
                 n += 1
                 log_detail = LogDetail(
