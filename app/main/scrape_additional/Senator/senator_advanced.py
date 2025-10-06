@@ -1,8 +1,4 @@
-import argparse
-import random
-import re
-import time
-import json
+import random, re, time, json
 from dataclasses import dataclass, asdict
 from typing import Dict, List, Optional
 from urllib.parse import urlencode
@@ -17,7 +13,7 @@ from urllib3.util.retry import Retry
 BASE = "https://www.aph.gov.au"
 SEARCH_PATH = "/Senators_and_Members/Parliamentarian_Search_Results"
 ROBOTS_URL = f"{BASE}/robots.txt"
-UA = "CITS5206-Group6/1.0 (+contact: your-email@example.com)"
+UA = "Perth USAsia Centre/1.0 (+contact: lisa.cluett@perthusasia.edu.au)"
 
 
 def make_session():

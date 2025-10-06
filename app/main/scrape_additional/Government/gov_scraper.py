@@ -1,21 +1,21 @@
-import requests
-import re
-import concurrent.futures
+import requests, re, concurrent.futures
 from bs4 import BeautifulSoup
 from typing import Optional, List
 
 from app.main.scrape_additional.Government.gov_scraper_person import Person
 from app.main.scrape_additional.Government.gov_database import commit_batch
-from app import db
 from app.models import GovPeople
 
 BASE_URL = 'https://www.directory.gov.au'
+UA = "Perth USAsia Centre/1.0 (+contact: lisa.cluett@perthusasia.edu.au)"
 
+session = requests.Session()
+session.headers.update({"User-Agent": UA})
 
 def get_page(url: str) -> Optional[requests.Response]:
     """Fetch a webpage and return its response object."""
     try:
-        response = requests.get(url, timeout=15)
+        response = session.get(url, timeout=15)
         response.raise_for_status()
         return response
     except requests.RequestException as e:
