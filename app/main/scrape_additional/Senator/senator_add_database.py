@@ -16,21 +16,32 @@ def senator_add_to_database():
    
     db.session.execute(delete(SenatorPeople))
     db.session.commit()  
-
    
+    n=0
     for row in rows_json:
-        s = SenatorPeople(
-            first_name=row.get("first_name"),
-            last_name=row.get("last_name"),
-            sector=row.get("sector"),
-            state=row.get("state"),
-            business_phone=row.get("phones"),
-            email=row.get("emails"),
-        )
-        db.session.add(s)
+
+        existing = SenatorPeople.query.filter_by(profile_url=row.get("profile_url")).first()
+        if not existing:
+            s = SenatorPeople(
+                salutation=row.get("salutations"),
+                first_name=row.get("first_name"),
+                last_name=row.get("last_name"),
+                gender=row.get("gender"),
+                role=row.get("position"),
+                organization="Parliament of Australia",
+                city=row.get("city"),
+                state=row.get("state"),
+                country ="Australia",
+                sector=row.get("sector"),
+                business_phone=row.get("phones"),
+                email=row.get("emails"),
+                profile_url=row.get("source_url")
+            )
+            db.session.add(s)
+            n+=1
 
     db.session.commit() 
-    print(f"Inserted {len(rows_json)} records into senator table.")
+    print(f"Inserted {n} records into senator table.")
 
 def search_database_for_senator(fname, lname):
     person = SenatorPeople.query.filter_by(

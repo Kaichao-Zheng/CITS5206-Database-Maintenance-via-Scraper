@@ -144,6 +144,7 @@ class SenatorPeople(db.Model):
     mobile_phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
     email: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128))
     sector: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
+    profile_url: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256))
 
     def __repr__(self):
         return '<SenatorPeople {}>'.format(self.first_name or '', self.last_name or '')

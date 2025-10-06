@@ -4,6 +4,7 @@ from typing import Dict, List, Optional
 from urllib.parse import urlencode
 import urllib.robotparser as robotparser
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from app.main.scrape_additional.Government.constants import POST_NOMINALS, PREFIXES, MALES, FEMALES, STATES
 
 import requests
 from bs4 import BeautifulSoup
@@ -28,14 +29,17 @@ def make_session():
     return s
 
 
+# Load robots.txt once
+rp = robotparser.RobotFileParser()
+rp.set_url("https://www.aph.gov.au/robots.txt")
+rp.read()
+
 def allowed_by_robots(url: str, user_agent: str = UA) -> bool:
-    rp = robotparser.RobotFileParser()
     try:
-        rp.set_url(ROBOTS_URL)
-        rp.read()
         return rp.can_fetch(user_agent, url)
     except Exception:
-        return url.startswith(f"{BASE}/Senators_and_Members/")
+        # fallback for any error
+        return url.startswith("https://www.aph.gov.au/Senators_and_Members/")
 
 
 @dataclass
@@ -44,7 +48,11 @@ class SenatorRow:
     last_name: str
     profile_url: str
     sector: str
+    salutations: Optional[str] = None
+    gender: Optional[str] = None
+    position: Optional[str] = None
     party: Optional[str] = None
+    city: Optional[str] = None
     state: Optional[str] = None
     phones: Optional[str] = None
     emails: Optional[str] = None
@@ -59,19 +67,36 @@ def polite_sleep(a: float = 0.3, b: float = 1.0):
 def parse_search_results(html: str) -> List[Dict[str, str]]:
     soup = BeautifulSoup(html, "lxml")
     out = []
+
     for a in soup.select("a[href*='Parliamentarian?MPID=']"):
         name = a.get_text(" ", strip=True)
         href = a.get("href") or ""
         if not name or not href:
             continue
         full = requests.compat.urljoin(BASE, href)
-        out.append({"name": name, "href": full})
+
+        # Navigate to the sibling <dl> element
+        dl = a.find_parent("h4").find_next_sibling("dl")
+        details = {}
+        if dl:
+            # Iterate over dt/dd pairs
+            dts = dl.find_all("dt")
+            dds = dl.find_all("dd")
+            for dt, dd in zip(dts, dds):
+                key = dt.get_text(" ", strip=True).lower()
+                value = dd.get_text(" ", strip=True)
+                details[key] = value
+
+        out.append({"name": name, "href": full, **details})
+
+    # Remove duplicates based on href
     seen = set()
     uniq = []
     for r in out:
         if r["href"] not in seen:
             uniq.append(r)
             seen.add(r["href"])
+
     return uniq
 
 
@@ -92,7 +117,6 @@ def parse_profile(html: str) -> Dict[str, Optional[str]]:
         return None
 
     party = extract_text_after_heading(["Party"])
-    state = extract_text_after_heading(["State/Territory", "State and Territory"])
 
     phones = []
     for tel in soup.select("a[href^='tel:']"):
@@ -118,12 +142,10 @@ def parse_profile(html: str) -> Dict[str, Optional[str]]:
 
     return {
         "party": party,
-        "state": state,
         "phones": phones_str,
         "emails": emails_str,
         "postal_address": postal
     }
-
 
 def fetch_profile(session, p, sector: str):
     profile_url = p["href"]
@@ -136,17 +158,50 @@ def fetch_profile(session, p, sector: str):
 
     details = parse_profile(pr.text)
 
+    location = p["for"]
+    locations = location.split(", ")
+    if len(locations) > 1:
+        city, state = locations[0], locations[1]
+    else:
+        city, state = None, locations[0]
+
     parts = p["name"].split()
-    first_name = parts[1] if len(parts) > 1 else ""
-    last_name = parts[2] if len(parts) > 2 else ""
+    parts = [part for part in parts if part.lower() != "the"]  # remove 'the'
+
+    # Salutations extraction
+    salutations = []
+    while parts and parts[0] in PREFIXES:
+        salutations.append(parts.pop(0))
+    
+    # Post-nominals extraction
+    post_noms = []
+    while parts and parts[-1].replace(".", "").upper() in POST_NOMINALS:
+        post_noms.insert(0, parts.pop())
+
+    first_name, last_name = "", ""
+    first_name = parts[0] if parts else ""
+    last_name = " ".join(parts[1:]) if len(parts) > 1 else ""  
+    
+    gender = None
+    for sal in salutations:
+        if sal in MALES:
+            gender = "Male"
+            break
+        elif sal in FEMALES:
+            gender = "Female"
+            break
 
     return SenatorRow(
+        salutations=" ".join(salutations) if salutations else None,
+        gender=gender if gender else None,
         first_name=first_name,
         last_name=last_name,
         profile_url=profile_url,
         sector=sector,
         party=details.get("party"),
-        state=details.get("state"),
+        city=city,
+        state=STATES.get(state),
+        position='Member of Senate' if sector=="Senator" else f'Member of House of Representatives',
         phones=details.get("phones"),
         emails=details.get("emails"),
         postal_address=details.get("postal_address"),
@@ -161,8 +216,8 @@ def fetch_senators_combined(limit: Optional[int] = None, max_workers: int = 8) -
     session = make_session()
     rows: List[SenatorRow] = []
 
-    for sector_type in [("House of Representatives", {"mem": 1, "par": -1, "gen": 0, "ps": 12}),
-                        ("Senator", {"sen": 1, "par": -1, "gen": 0, "ps": 12})]:
+    for sector_type in [("House of Representatives", {"mem": 1, "q": 0}),
+                        ("Senator", {"sen": 1, "q": 0})]:
 
         sector_name, base_params = sector_type
         max_pages = 13 if sector_name == "House of Representatives" else 7
