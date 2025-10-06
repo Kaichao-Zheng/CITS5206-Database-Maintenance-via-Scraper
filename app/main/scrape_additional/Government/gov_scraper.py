@@ -1,6 +1,8 @@
 import requests, re, concurrent.futures
 from bs4 import BeautifulSoup
 from typing import Optional, List
+from urllib.parse import urljoin, urlparse
+import threading
 
 from app.main.scrape_additional.Government.gov_scraper_person import Person
 from app.main.scrape_additional.Government.gov_database import commit_batch
@@ -40,7 +42,7 @@ def parse_organisation_info(soup):
         if contact_container.find("span", class_="text-phone") 
         else None
     )
-    
+
     contact_info["email"] = (
         contact_container.find("span", class_="text-email").get_text(strip=True)
         if contact_container.find("span", class_="text-email")
@@ -60,13 +62,11 @@ def parse_people(person_element, organisation: str, location: Optional[str]) -> 
     person.addLocation(location)
 
     # Position and name
-    position_element = person_element.find("a")
-    if position_element:
-        person.addPosition(position_element.text.strip())
-
-        name_element = position_element.find_next("a")
-        if name_element:
-            person.addName(name_element.text.strip())
+    links = person_element.find_all("a")
+    if links:
+        person.addPosition(links[0].get_text(strip=True))
+        if len(links) > 1:
+            person.addName(links[1].get_text(strip=True))
 
     # Contact info
     phone_element = person_element.find('a', attrs={"data-original-title": "Phone Number"})
@@ -83,14 +83,6 @@ def parse_people(person_element, organisation: str, location: Optional[str]) -> 
 def find_text(element, text: str):
     """Find element containing specific text."""
     return element.find(lambda tag: text in tag.get_text())
-
-
-def parse_location(element) -> Optional[str]:
-    """Parse location for organisation."""
-    location = element.find("div", class_="building-location")
-    if location:
-        return location.find("a").get_text(strip=True)
-    return None
 
 
 def parse_key_people(element, organisation: str, location: Optional[str]) -> List[Person]:
@@ -138,6 +130,56 @@ def person_to_model(person: Person, fallback_info) -> GovPeople:
         sector=person.department,
     )
 
+def normalise_url(url: str) -> str:
+    """
+    Normalize URL by:
+    - Lowercasing
+    - Removing trailing slashes
+    - Removing fragments
+    """
+    parsed = urlparse(url)
+    normalized = parsed._replace(fragment="") # Remove #fragment
+    path = normalized.path.rstrip("/") # Remove trailing slash
+    return urljoin(f"{normalized.scheme}://{normalized.netloc}", path).lower()
+
+visited = set()
+visited_lock = threading.Lock()
+
+def scrape_sections(soup):
+    """Scrape and recurse into 'Sections' links within an organisation page."""
+    section_block = soup.find("section", class_="block-directory-custom-section-block")
+    if not section_block:
+        return []
+
+    section_links = section_block.find_all("li", class_="list-group-item")
+    if not section_links:
+        return []
+
+    all_people = []
+    for link in section_links:
+
+        a_tag = link.find("a")
+        if not a_tag:
+            continue
+        href = a_tag["href"]
+        if not href:
+            continue
+
+        section_url = BASE_URL + href
+
+        # Skip already visited URLs
+        if normalise_url(section_url) in visited:
+            continue
+
+        with visited_lock: # Ensure thread-safe access to visited set
+            visited.add(normalise_url(section_url))
+        print(f"🔗 Scraping section: {section_url}")
+
+        section_results = scrape_organisation(link)
+        all_people.extend(section_results)
+
+    return all_people
+
 
 def scrape_organisation(result):
     """Scrape an organisation and return list of GovPeople."""
@@ -149,8 +191,14 @@ def scrape_organisation(result):
 
     organisation = result.text.strip()
     href = a_tag["href"]
+    if not href:
+        return []
 
     org_page = get_page(BASE_URL + href)
+
+    with visited_lock: # Ensure thread-safe access to visited set
+        visited.add(normalise_url(BASE_URL + href))
+
     if not org_page:
         return []
 
@@ -162,7 +210,7 @@ def scrape_organisation(result):
     if not org_results:
         return []
 
-    location = parse_location(org_results[1]) if len(org_results) > 1 else None
+    location = fallback_info["location"]
 
     for org_result in org_results:
         # Key People
@@ -200,6 +248,10 @@ def scrape_organisation(result):
                         department=board_name
                     )
                     org_people.extend([person_to_model(p, fallback_info) for p in board_people])
+
+    # Search through linked sections
+    section_people = scrape_sections(soup)
+    org_people.extend(section_people)
 
     return org_people
 
