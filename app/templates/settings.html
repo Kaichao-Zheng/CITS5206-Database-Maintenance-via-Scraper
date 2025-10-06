@@ -8,8 +8,10 @@
     <div
       class="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-700 mx-auto mb-4"
     ></div>
-    <p class="text-lg">Updating government database...</p>
-    <p class="text-sm text-gray-600 mt-2">Please do not close this page.</p>
+    <p class="text-lg">Updating databases...</p>
+    <p class="text-sm text-gray-600 mt-2">
+      This may take several minutes, please do not close this page.
+    </p>
   </div>
 </div>
 
@@ -27,10 +29,8 @@
     >Change Email</a
   >
   <div class="flex flex-col items-center gap-2">
-    <button id="update-gov-db" class="button">
-      Update Government Database
-    </button>
-    <p id="update-gov-db-status"></p>
+    <button id="update-db" class="button">Update Local Databases</button>
+    <p id="update-db-status"></p>
   </div>
 </div>
 
@@ -55,67 +55,51 @@
     }
   });
 
-  document
-    .getElementById("update-gov-db")
-    .addEventListener("click", async () => {
-      disableNavigation(true);
-      document.getElementById("update-gov-db-status").innerText = "";
+  document.getElementById("update-db").addEventListener("click", async () => {
+    disableNavigation(true);
+    document.getElementById("update-db-status").innerText = "";
 
-      try {
-        const response = await fetch("/gov_update", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": "{{ csrf_token() }}",
-          },
-        });
+    const headers = {
+      "Content-Type": "application/json",
+      "X-CSRFToken": "{{ csrf_token() }}",
+    };
 
-        if (response.ok) {
-          const data = await response.json();
-          document.getElementById("update-gov-db-status").innerText =
-            "Update government database successfully.";
-        } else {
-          const errorData = await response.json();
-          document.getElementById("update-gov-db-status").innerText =
-            "Error: " + (errorData.message || "Unknown error occurred.");
-        }
-      } catch (error) {
-        document.getElementById("update-gov-db-status").innerText =
-          "Error: " + error.message;
-      } finally {
-        disableNavigation(false);
+    try {
+      // Run both fetches at the same time
+      const [govResponse, seResponse] = await Promise.all([
+        fetch("/gov_update", { method: "POST", headers }),
+        fetch("/senator_update", { method: "POST", headers }),
+      ]);
+
+      // Handle government response
+      if (govResponse.ok) {
+        document.getElementById("update-db-status").innerText =
+          "Government database updated successfully.";
+      } else {
+        const errorData = await govResponse.json();
+        document.getElementById("update-db-status").innerText =
+          "Error updating government DB: " +
+          (errorData.message || "Unknown error.");
       }
-    });
-  document
-    .getElementById("update-se-db")
-    .addEventListener("click", async () => {
-      disableNavigation(true);
-      document.getElementById("update-se-db-status").innerText = "";
 
-      try {
-        const response = await fetch("/senator_update", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": "{{ csrf_token() }}",
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          document.getElementById("update-se-db-status").innerText =
-            "Update senator database successfully.";
-        } else {
-          const errorData = await response.json();
-          document.getElementById("update-se-db-status").innerText =
-            "Error: " + (errorData.message || "Unknown error occurred.");
-        }
-      } catch (error) {
-        document.getElementById("update-se-db-status").innerText =
-          "Error: " + error.message;
-      } finally {
-        disableNavigation(false);
+      // Handle senator response
+      if (seResponse.ok) {
+        document.getElementById("update-db-status").innerText =
+          "Senator database updated successfully.";
+      } else {
+        const errorData = await seResponse.json();
+        document.getElementById("update-db-statuss").innerText =
+          "Error updating senator DB: " +
+          (errorData.message || "Unknown error.");
       }
-    });
+    } catch (error) {
+      document.getElementById("update-db-status").innerText =
+        "Error: " + error.message;
+      document.getElementById("update-db-status").innerText =
+        "Error: " + error.message;
+    } finally {
+      disableNavigation(false);
+    }
+  });
 </script>
 {% endblock %}
