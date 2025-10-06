@@ -23,11 +23,35 @@ def get_page(url: str) -> Optional[requests.Response]:
         return None
 
 
-def parse_organisations(response: requests.Response, element: str, element_class: str):
-    """Parse the organisations from a response."""
-    soup = BeautifulSoup(response.content, "html.parser")
-    return soup.find_all(element, class_=element_class)
+def parse_organisation_info(soup):
+    """Extract phone, email, and location from the organisation's contact section."""
+    contact_info = {
+        "phone": None,
+        "email": None,
+        "location": None
+    }
 
+    contact_container = soup.find("div", class_="view-content container")
+    if not contact_container:
+        return contact_info
+    
+    contact_info["phone"] = (
+        contact_container.find("span", class_="text-phone").get_text(strip=True)
+        if contact_container.find("span", class_="text-phone") 
+        else None
+    )
+    
+    contact_info["email"] = (
+        contact_container.find("span", class_="text-email").get_text(strip=True)
+        if contact_container.find("span", class_="text-email")
+        else None
+    )
+
+    location_elem = contact_container.find("div", class_="building-location")
+    if location_elem and location_elem.find("a"):
+        contact_info["location"] = location_elem.find("a").get_text(strip=True)
+
+    return contact_info
 
 def parse_people(person_element, organisation: str, location: Optional[str]) -> Person:
     """Extract person details from a 'Key People' entry."""
@@ -45,11 +69,11 @@ def parse_people(person_element, organisation: str, location: Optional[str]) -> 
             person.addName(name_element.text.strip())
 
     # Contact info
-    phone_element = person_element.find('a', attrs={"data-bs-original-title": "Phone Number"})
+    phone_element = person_element.find('a', attrs={"data-original-title": "Phone Number"})
     if phone_element:
         person.addPhone(phone_element.get_text(strip=True))
     
-    email_element = person_element.find('a', attrs={"data-bs-original-title": "Email"})
+    email_element = person_element.find('a', attrs={"data-original-title": "Email"})
     if email_element:
         person.addEmail(email_element.get_text(strip=True))
 
@@ -96,7 +120,7 @@ def scrape_boards(element, text, organisation, location, department=None) -> Lis
     return people_objs
 
 
-def person_to_model(person: Person) -> GovPeople:
+def person_to_model(person: Person, fallback_info) -> GovPeople:
     """Map Person object to GovPeople model instance."""
     return GovPeople(
         salutation=person.salutation,
@@ -108,9 +132,9 @@ def person_to_model(person: Person) -> GovPeople:
         city=person.city,
         state=person.state,
         country=person.country,
-        business_phone=person.phone,
+        business_phone=person.phone if person.phone else fallback_info["phone"],
         mobile_phone=None,   # Not scraped
-        email=person.email,
+        email=person.email if person.email else fallback_info["email"],
         sector=person.department,
     )
 
@@ -130,7 +154,11 @@ def scrape_organisation(result):
     if not org_page:
         return []
 
-    org_results = parse_organisations(org_page, "section", ["views-element-container", "block-directory-custom"])
+    soup = BeautifulSoup(org_page.content, "html.parser")
+
+    fallback_info = parse_organisation_info(soup)
+
+    org_results = soup.find_all("section", class_=["views-element-container", "block-directory-custom"])
     if not org_results:
         return []
 
@@ -140,11 +168,11 @@ def scrape_organisation(result):
         # Key People
         if find_text(org_result, "Key People"):
             people_objs = parse_key_people(org_result, organisation, location)
-            org_people.extend([person_to_model(p) for p in people_objs])
+            org_people.extend([person_to_model(p, fallback_info) for p in people_objs])
 
         # Executive appointments
         board_people = scrape_boards(org_result, "Current single executive appointments", organisation, location)
-        org_people.extend([person_to_model(p) for p in board_people])
+        org_people.extend([person_to_model(p, fallback_info) for p in board_people])
 
         # Linked boards
         if find_text(org_result, "Government appointed boards"):
@@ -160,32 +188,40 @@ def scrape_organisation(result):
                 if not board_page:
                     continue
 
-                board_results = parse_organisations(board_page, "section", ["views-element-container", "block-directory-custom"])
+                # 🔧 Manual inline parsing again
+                board_soup = BeautifulSoup(board_page.content, "html.parser")
+                board_results = board_soup.find_all("section", class_=["views-element-container", "block-directory-custom"])
                 for board_result in board_results:
-                    board_people = scrape_boards(board_result, "Current board appointments", organisation, location, department=board_name)
-                    org_people.extend([person_to_model(p) for p in board_people])
+                    board_people = scrape_boards(
+                        board_result,
+                        "Current board appointments",
+                        organisation,
+                        location,
+                        department=board_name
+                    )
+                    org_people.extend([person_to_model(p, fallback_info) for p in board_people])
 
     return org_people
 
-# TODO: add exception handling
+
 def update_gov_database():
     """Main entrypoint: scrape and update DB."""
     page = get_page(BASE_URL + '/commonwealth-entities-and-companies')
     if not page:
-        raise Exception(f"Failed to load main government page, URL:${BASE_URL}/commonwealth-entities-and-companies")
+        raise Exception(f"Failed to load main government page, URL:{BASE_URL}/commonwealth-entities-and-companies")
 
-    results = parse_organisations(page, "td", "views-field views-field-title")
+    soup = BeautifulSoup(page.content, "html.parser")
+    results = soup.find_all("td", class_="views-field views-field-title")
 
     all_people = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         for org_people in executor.map(scrape_organisation, results):
-            all_people.extend(org_people)   # org_people is a list of dicts
+            all_people.extend(org_people)
 
-    # Commit in batches using your commit_batch
+    # Commit in batches
     batch_size = 1000
     for i in range(0, len(all_people), batch_size):
         batch = all_people[i:i + batch_size]
         commit_batch(batch)  
 
     print(f"✅ Inserted/updated {len(all_people)} records into gov_people")
-
