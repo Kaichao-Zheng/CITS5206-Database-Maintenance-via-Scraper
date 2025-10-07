@@ -4,9 +4,31 @@ import os
 import sys
 from unittest.mock import patch, MagicMock
 
-# Mock problematic imports before importing the app
-sys.modules['undetected_chromedriver'] = MagicMock()
-sys.modules['selenium'] = MagicMock()
+# Mock ALL selenium-related modules before any imports
+selenium_modules = [
+    'selenium',
+    'selenium.webdriver',
+    'selenium.webdriver.common',
+    'selenium.webdriver.common.by',
+    'selenium.webdriver.common.exceptions',
+    'selenium.webdriver.support',
+    'selenium.webdriver.support.ui',
+    'selenium.webdriver.support.wait',
+    'selenium.webdriver.support.expected_conditions',
+    'selenium.webdriver.chrome',
+    'selenium.webdriver.chrome.options',
+    'selenium.webdriver.chrome.service',
+    'selenium.common',
+    'selenium.common.exceptions',
+    'undetected_chromedriver',
+    'linkedin_scraper',
+    'linkedin_scraper.actions',
+    'linkedin_scraper.person',
+    'linkedin_scraper.objects',
+]
+
+for module_name in selenium_modules:
+    sys.modules[module_name] = MagicMock()
 
 # Mock requests module with exceptions
 requests_mock = MagicMock()
@@ -29,30 +51,34 @@ def app():
     # Create app with testing configuration
     app = create_app()
     app.config.update({
-        'TESTING': True,
-        'SQLALCHEMY_DATABASE_URI': f'sqlite:///{db_path}',
-        'WTF_CSRF_ENABLED': False,  # Disable CSRF for testing
-        'SECRET_KEY': 'test-secret-key'
+        "TESTING": True,
+        "SQLALCHEMY_DATABASE_URI": f"sqlite:///{db_path}",
+        "WTF_CSRF_ENABLED": False,
     })
-    
+
+    # Create the database
     with app.app_context():
         db.create_all()
-        yield app
+
+    yield app
+
+    # Clean up
+    with app.app_context():
+        db.session.remove()
         db.drop_all()
-    
     os.close(db_fd)
     os.unlink(db_path)
 
 
 @pytest.fixture
 def client(app):
-    """A test client for the Flask application."""
+    """A test client for the app."""
     return app.test_client()
 
 
 @pytest.fixture
 def runner(app):
-    """A test runner for the Flask application's CLI commands."""
+    """A test runner for the app's Click commands."""
     return app.test_cli_runner()
 
 
@@ -65,15 +91,15 @@ def auth_headers(client):
         email='test@example.com'
     )
     user.set_password('testpassword')
-    
+
     db.session.add(user)
     db.session.commit()
-    
+
     # Login and get session (username is default 'admin', only need password)
     response = client.post('/', data={
         'password': 'testpassword'
     }, follow_redirects=True)
-    
+
     return {'Cookie': response.headers.get('Set-Cookie', '')}
 
 
@@ -86,57 +112,22 @@ def authenticated_client(client):
         email='test@example.com'
     )
     user.set_password('testpassword')
-    
+
     db.session.add(user)
     db.session.commit()
-    
+
     # Login
     client.post('/', data={
         'password': 'testpassword'
     }, follow_redirects=True)
-    
+
     return client
 
 
 @pytest.fixture
-def sample_people_data():
-    """Sample people data for testing."""
-    return [
-        {
-            'first_name': 'John',
-            'last_name': 'Doe',
-            'organization': 'Test Corp',
-            'role': 'Manager',
-            'email': 'john.doe@test.com',
-            'city': 'Sydney',
-            'state': 'NSW',
-            'country': 'Australia'
-        },
-        {
-            'first_name': 'Jane',
-            'last_name': 'Smith',
-            'organization': 'Test Inc',
-            'role': 'Developer',
-            'email': 'jane.smith@test.com',
-            'city': 'Melbourne',
-            'state': 'VIC',
-            'country': 'Australia'
-        }
-    ]
-
-
-@pytest.fixture
 def sample_csv_data():
-    """Sample CSV data for testing file uploads."""
-    return """FirstName,LastName,Organization,Role,EmailAddress,City (if outside AUS),State AUS only,Country
-John,Doe,Test Corp,Manager,john.doe@test.com,Sydney,NSW,Australia
-Jane,Smith,Test Inc,Developer,jane.smith@test.com,Melbourne,VIC,Australia"""
-
-
-@pytest.fixture
-def sample_log_data():
-    """Sample log data for testing."""
-    return {
-        'status': 'completed',
-        'result': 'Successfully updated 2 records'
-    }
+    """Sample CSV data for testing."""
+    return """FirstName,LastName,Organization,Role,Email
+John,Doe,Acme Corp,Manager,john.doe@acme.com
+Jane,Smith,Tech Inc,Developer,jane.smith@tech.com
+Bob,Johnson,Startup Co,CEO,bob.johnson@startup.com"""
