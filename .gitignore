@@ -19,6 +19,15 @@ test-*.py
 *.xlsx
 updated.csv
 
+#Unit test / coverage
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+nosetests.xml
+junit*.xml
+
 #db
 *.db
 
