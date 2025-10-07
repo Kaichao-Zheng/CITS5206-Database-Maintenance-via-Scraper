@@ -173,7 +173,6 @@ def scrape_sections(soup):
 
         with visited_lock: # Ensure thread-safe access to visited set
             visited.add(normalise_url(section_url))
-        print(f"🔗 Scraping section: {section_url}")
 
         section_results = scrape_organisation(link)
         all_people.extend(section_results)
