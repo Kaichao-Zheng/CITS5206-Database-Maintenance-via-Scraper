@@ -36,11 +36,13 @@ class TestFileUpload:
         # Verify data was inserted into database
         with authenticated_client.application.app_context():
             people = People.query.all()
-            assert len(people) == 2
+            assert len(people) == 3
             assert people[0].first_name == 'John'
             assert people[0].last_name == 'Doe'
             assert people[1].first_name == 'Jane'
             assert people[1].last_name == 'Smith'
+            assert people[2].first_name == 'Bob'
+            assert people[2].last_name == 'Johnson'
 
     def test_upload_csv_with_missing_columns(self, authenticated_client):
         """Test uploading CSV with missing required columns."""
