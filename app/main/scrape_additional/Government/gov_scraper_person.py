@@ -91,10 +91,20 @@ class Person:
         
     def addLocation(self, location):
         if not location:
+            self.city = self.state = self.country = None
             return
+    
         components = location.split(" ")
-        self.state = components[-2]
-        if self.state in AUS_STATES:
-            self.country = "Australia"
+    
+        if len(components) == 1:
+            self.city = None
+            self.state = None
+            self.country = components[0]  # fallback
+        elif len(components) == 2:
+            self.state = components[-1]
+            self.country = "Australia" if self.state in AUS_STATES else None
+            self.city = components[0]
         else:
+            self.state = components[-2]
+            self.country = "Australia" if self.state in AUS_STATES else None
             self.city = " ".join(components[:-2])

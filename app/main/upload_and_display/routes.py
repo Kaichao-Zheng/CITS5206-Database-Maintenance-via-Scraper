@@ -187,6 +187,7 @@ def process_gw(log_id):
                 person.salutation = new_person_detail['salutation']
                 person.organization = new_person_detail['organization']
                 person.role = new_person_detail['role']
+                person.gender = new_person_detail['gender']
                 person.city = new_person_detail['city']
                 person.state = new_person_detail['state']
                 person.country = new_person_detail['country']
@@ -256,8 +257,6 @@ def process_se(log_id):
             ).first()
 
             if new_person_detail:
-                print(new_person_detail['first_name'], new_person_detail['last_name'], "found in Senator database")
-               
                 person.salutation = new_person_detail.get('salutation')
                 person.gender = new_person_detail.get('gender')
                 person.organization = new_person_detail.get('organization')

@@ -12,7 +12,8 @@ import json
 import os
 from selenium.webdriver.common.by import By
 from .profile_url_scrape import load_cookies, save_cookies, scrape_linkedin_people_search
-from linkedin_scraper import Person, actions
+from app.linkedin_scraper.person import Person
+from linkedin_scraper import actions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from app import db
@@ -106,8 +107,6 @@ def scrape_profiles(driver, profile_map, cookies_file="my_linkedin_cookies.json"
                 print(f"Experiences scraped for {name}")
             except Exception as e:
                 print(f"⚠️ Failed to scrape experiences for {name}: {e}")
-                person.company = ""
-                person.job_title = ""
             
             # Scrape email
             human_delay(2, 4)
