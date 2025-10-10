@@ -46,7 +46,7 @@ class People(db.Model):
     linkedin: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128))
 
     def __repr__(self):
-        return '<People {}>'.format(self.first_name or '', self.last_name or '')
+        return '<People {} {}>'.format(self.first_name or '', self.last_name or '')
     
     def as_dict(self):
         return {
@@ -118,7 +118,7 @@ class GovPeople(db.Model):
     sector: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
 
     def __repr__(self):
-        return '<GovPeople {}>'.format(self.first_name or '', self.last_name or '')
+        return '<GovPeople {} {}>'.format(self.first_name or '', self.last_name or '')
 
     def as_dict(self):
         return {
