@@ -24,7 +24,7 @@ def create_app(config_class=os.environ.get("FLASK_CONFIG") or DevelopmentConfig)
     csrf.init_app(app) 
     login.init_app(app)
     mail.init_app(app)
-    login.login_view = 'main.index'
+    login.login_view = 'auth.index'
     
     with app.app_context():
         from . import main, auth
